@@ -8,13 +8,20 @@ Optimise the way you consume media.
 
 # TODO
 
-- [ ] Clean up duration range
-- [ ] have preset ranges (i.e. lunch time (<20mins>), chilling, video essay / doc (> 1 hour)
-- [ ] toggle between ai generated categories
+- [x] Clean up duration range
+- [x] toggle between ai generated categories
+- [ ] have a loading state while the ai cats load
 - [ ] clean up components
 - [ ] clean up code
+- [ ] improve design
+- [ ] light and dark mode
 - [ ] Dockerise FE, AI
+- [ ] Connect to Spotify
+- [ ] Implement podcasts
+- [ ] Add Album tracking
 - [ ] Try to use a different solution to a JSON file for watchlater
+      (there really should be because as soon as you finish a vid, the whole list is now out of sync)
+- [ ] Make it a product
 
 ## Expanding the ESLint configuration
 
