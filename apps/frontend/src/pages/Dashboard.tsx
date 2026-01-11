@@ -1,17 +1,26 @@
+// App.tsx
+import videosData from "../../../../watchlater.json";
+import type { Video } from "../types";
+import YTWatchList from "../components/YTWatchList";
+
+// Assert type
+const videos: Video[] = videosData;
+
 export default function Dashboard() {
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Dashboard</h2>
-      <p>✅ Connected: Spotify</p>
-      <p>✅ Connected: YouTube</p>
-      <div className="mt-6">
-        <h3 className="text-xl font-semibold mb-2">Your Queue:</h3>
-        <ul className="list-disc list-inside">
-          <li>🎧 Lex Fridman: Eliezer Yudkowsky</li>
-          <li>📺 Kurzgesagt: The Fermi Paradox</li>
-          <li>🎬 Lady Bird</li>
-        </ul>
-      </div>
+      <h1 className="text-xl font-bold p-4">YT Watch Later</h1>
+      <YTWatchList videos={videos} />
+      <ul className="space-y-4">
+        <li className="border p-4 rounded">
+          🎧 Lex Fridman: Eliezer Yudkowsky{" "}
+          <button className="ml-4 text-blue-600 underline">Listen</button>
+        </li>
+        <li className="border p-4 rounded">
+          🎬 Lady Bird{" "}
+          <button className="ml-4 text-blue-600 underline">Watch</button>
+        </li>
+      </ul>
     </div>
   );
 }
