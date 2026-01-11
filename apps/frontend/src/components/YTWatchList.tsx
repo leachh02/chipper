@@ -85,7 +85,7 @@ export default function YTWatchList({ videos }: Props) {
   });
 
   // Total watch time in seconds
-  const totalSeconds = videos.reduce(
+  const totalSeconds = sorted.reduce(
     (sum, v) => sum + toSeconds(v.duration),
     0
   );
@@ -166,8 +166,8 @@ export default function YTWatchList({ videos }: Props) {
             step={1}
             onValueChange={(val) => setRange(val as [number, number])}
           >
-            <Slider.Track className="bg-gray-300 relative grow rounded-full h-[6px]">
-              <Slider.Range className="absolute bg-blue-500 rounded-full h-full" />
+            <Slider.Track className="relative h-[6px] grow rounded-full bg-gray-500">
+              <Slider.Range className="absolute h-full rounded-full bg-white" />
             </Slider.Track>
             <Slider.Thumb className="block w-[20px] h-[20px] bg-black border border-gray-400 rounded-full shadow" />
             <Slider.Thumb className="block w-[20px] h-[20px] bg-black border border-gray-400 rounded-full shadow" />
