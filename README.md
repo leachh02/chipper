@@ -1,27 +1,41 @@
 # Chipper: An AI Watchlist Depleter
 
-I would like to dedicate this project to family. Use Chipper to get through your to do lists, watch laters, episodes, as fast as possible, so that you can to spend valuable (and decluttered) time with them. Ideally, you prioritse them before you yt vids anyway
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+I would like to dedicate this project to family. Use Chipper to get through your to do lists, watch laters, episodes, as fast as possible, so that you can to spend valuable (and decluttered) time with them. Ideally, you prioritse them before you yt vids anyway.
 
 Optimise the way you consume media.
 
 # TODO
 
-- [x] Clean up duration range
-- [x] toggle between ai generated categories
-- [ ] have a loading state while the ai cats load
+## Code & Design
+
+- [ ] improve design
 - [ ] clean up components
 - [ ] clean up code
-- [ ] improve design
 - [ ] light and dark mode
-- [ ] Dockerise FE, AI
-- [ ] Connect to Spotify
-- [ ] Implement podcasts
-- [ ] Add Album tracking
-- [ ] Try to use a different solution to a JSON file for watchlater
-      (there really should be because as soon as you finish a vid, the whole list is now out of sync)
-- [ ] Make it a product
+- [ ] remove bottom instructions (read them first though, they may be handy)
+- [ ] Fix/confirm how the entire projct work
+- [ ] Update the initial spiel and include instruction on how to get started
+
+## Must Have Product
+
+- [ ] Get domain and publish
+
+## Syncing
+
+- [ ] Delta sync vs full sync - for sync performance, it would be good to sort YT WL by date added and check against the existing chip list. Once you come across an exisitng video, it is safe to say the rest of the list should already be there. This has it's flaws, watching something further down the list, the links will all be off. Something to reconcile with the "chip" feature. Something users should be able to select before syncing.
+- [ ] To sync with yt, will need a delete function. perhaps in chipper, have a way to 'chip' away at the vids. these can be saved in a 'chiplist' so when you go to delete from youtube, the exetension goes trough the chip list and deletes them for you
+- [ ] support csv watchlater playlist import
+
+## Future Product
+
+- [ ] Find a way to get all thumbnails
+- [ ] Chipify? Have a 'ChipHub' for access to both Chipper and Chipfy
+  - [ ] Connect to Spotify
+  - [ ] Implement podcasts
+  - [ ] Add Album tracking
+- [ ] Likely need to make AI clusters a premium feature, use the cloud to host a dockerised AI service that can be used instead of anything local. it will slow down the application too much
+  - [ ] for ai clusters, user should be able to input how many categories they'd like and include warning that not giving a number will result in the ai experimenting up to 30 groupings
+- [ ] Make it a product, if this becomes popular, syncing across devices via cloud could be beneficial, this may cost money though, but will always be optional
 
 ## Expanding the ESLint configuration
 
