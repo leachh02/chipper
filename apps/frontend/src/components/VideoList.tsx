@@ -1,4 +1,3 @@
-// VideoList.tsx
 import type { Video } from "../types";
 import fallbackThumbnail from "../assets/fallback-thumbnail.png";
 
@@ -12,9 +11,10 @@ export default function VideoList({ videos, setSelectedVideo }: Props) {
     <div>
       <div className="grid grid-cols-5 sm:grid-cols-2 md:grid-cols-5 lg:grid-cols-7 gap-3">
         {videos.map((v) => (
-          <div key={v.index} className="flex flex-col ">
+          <div key={v.id} className="flex flex-col ">
             <a
-              onClick={() => setSelectedVideo(v.link)}
+              onClick={() => setSelectedVideo(v.url)}
+              href={v.url}
               target="_blank"
               rel="noreferrer"
             >

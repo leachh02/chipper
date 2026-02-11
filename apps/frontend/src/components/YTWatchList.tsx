@@ -1,17 +1,14 @@
-// VideoList.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Video } from "../types";
 import * as Slider from "@radix-ui/react-slider";
 import VideoList from "./VideoList";
 import ClusteredVideoList from "./ClusterVideoList";
 import VideoPlayer from "./VideoPlayer";
-
-interface Props {
-  videos: Video[];
-}
+import { getAllVideos, importRawVideos } from "../db/queries";
 
 const toSeconds = (d: string) =>
   d.split(":").reduce((acc, val) => acc * 60 + parseInt(val), 0);
+const EXTENSION_ID = import.meta.env.VITE_EXTENSIONS_ID;
 
 // utils/parseDuration.ts
 function parseDurationToMinutes(duration: string): number {
@@ -23,6 +20,42 @@ function parseDurationToMinutes(duration: string): number {
   if (parts[2]) totalMinutes += parts[2] * 60; // hours -> minutes
 
   return totalMinutes;
+}
+
+function RefreshWatchLaterButton({
+  loading,
+  setLoading,
+}: {
+  loading: boolean;
+  setLoading: (loading: boolean) => void;
+}) {
+  async function onClick() {
+    if (!window.chrome?.runtime?.sendMessage) {
+      alert("Chipper extension not installed");
+      return;
+    }
+    setLoading(true);
+    chrome.runtime.sendMessage(
+      EXTENSION_ID,
+      { type: "START_CHIPPER_SCRIPT" },
+      undefined,
+      async (response: any) => {
+        if (response.error) {
+          alert("Sync failed: " + response.error);
+          setLoading(false);
+          return;
+        }
+        await importRawVideos(response.data.chipper_result.rawVideos);
+        setLoading(false);
+      },
+    );
+  }
+
+  return (
+    <button onClick={onClick} disabled={loading}>
+      {loading ? "Syncing..." : "Sync Watch Later"}
+    </button>
+  );
 }
 
 async function categorizeVideos(videoData: Video[]) {
@@ -40,9 +73,11 @@ async function categorizeVideos(videoData: Video[]) {
   return categories;
 }
 
-export default function YTWatchList({ videos }: Props) {
+export default function YTWatchList() {
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<"title" | "channel" | "duration">(
-    "duration"
+    "duration",
   );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [search, setSearch] = useState("");
@@ -53,7 +88,15 @@ export default function YTWatchList({ videos }: Props) {
   const [clusters, setClusters] = useState<{ [label: string]: number[] }>({});
   const [selectedVideo, setSelectedVideo] = useState<string>("");
 
-  const filtered = videos.filter((v) => {
+  useEffect(() => {
+    async function load() {
+      const allVideos = await getAllVideos();
+      setVideos(allVideos);
+    }
+    load();
+  }, [loading]);
+
+  const filtered = videos?.filter((v) => {
     const query = search.toLowerCase();
     const mins = parseDurationToMinutes(v.duration);
     return (
@@ -87,7 +130,7 @@ export default function YTWatchList({ videos }: Props) {
   // Total watch time in seconds
   const totalSeconds = sorted.reduce(
     (sum, v) => sum + toSeconds(v.duration),
-    0
+    0,
   );
 
   // Format total watch time as HH:MM:SS
@@ -132,11 +175,7 @@ export default function YTWatchList({ videos }: Props) {
           ? "Thumbnails Required First"
           : "Some Thumbnails Missing"}
       </button>
-      <button
-        onClick={() => window.open("https://www.youtube.com/playlist?list=WL")}
-      >
-        Open Watch Later
-      </button>
+      <RefreshWatchLaterButton loading={loading} setLoading={setLoading} />
       <button
         onClick={async () => {
           if (showAICategories) {
@@ -176,7 +215,7 @@ export default function YTWatchList({ videos }: Props) {
       )}
 
       <div className="font-semibold">Total Watch Time: {formattedTotal}</div>
-      <div className="font-semibold">Total Video Count: {videos.length}</div>
+      <div className="font-semibold">Total Video Count: {sorted.length}</div>
       {selectedVideo != "" && <VideoPlayer url={selectedVideo} />}
       {showAICategories ? (
         <ClusteredVideoList

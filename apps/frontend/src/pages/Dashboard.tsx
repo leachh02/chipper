@@ -1,16 +1,10 @@
-// App.tsx
-import videosData from "../../../../watchlater.json";
-import type { Video } from "../types";
 import YTWatchList from "../components/YTWatchList";
-
-// Assert type
-const videos: Video[] = videosData;
 
 export default function Dashboard() {
   return (
     <div className="p-6">
       <h1 className="text-xl font-bold p-4">YT Watch Later</h1>
-      <YTWatchList videos={videos} />
+      <YTWatchList />
       <ul className="space-y-4">
         <li className="border p-4 rounded">
           🎧 Lex Fridman: Eliezer Yudkowsky{" "}
