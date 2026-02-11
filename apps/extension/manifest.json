@@ -1,0 +1,30 @@
+{
+  "name": "Chipper",
+  "description": "Chipper Extension",
+  "version": "1.0",
+  "manifest_version": 3,
+  "icons": {
+    "16": "images/axe-icon-16.png",
+    "32": "images/axe-icon-32.png",
+    "48": "images/axe-icon-48.png",
+    "128": "images/axe-icon-128.png"
+  },
+  "permissions": ["tabs", "storage"],
+  "host_permissions": ["https://www.youtube.com/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/playlist?list=WL"],
+      "js": ["scripts/yt-wl-playlist-script.js"]
+    }
+  ],
+  "action": {
+    "default_title": "Chipper"
+  },
+  "externally_connectable": {
+    "matches": ["http://localhost:5173/*", "https://chipper.app/*"]
+  }
+}
