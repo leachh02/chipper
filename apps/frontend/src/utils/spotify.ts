@@ -230,7 +230,7 @@ function simplifyAlbum(item: SpotifySavedAlbum): Album {
     image: item.album.images?.[0]?.url ?? "",
     added_at: item.added_at,
     total_tracks: item.album.total_tracks,
-    status: "unheard",
+    status: "queued",
     completed_at: null,
     rating: null,
     url: item.album.external_urls.spotify,

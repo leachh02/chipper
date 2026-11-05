@@ -1,9 +1,17 @@
-import { toggleAlbumStatus } from "../../db/queries";
-import type { Album } from "../../types";
+import { setAlbumStatus } from "../../db/queries";
+import type { Album, ChipStatus } from "../../types";
+import ChipActions from "../ChipActions";
 
 type AlbumsProps = {
   albums: Album[];
   setAlbums: (albums: Album[]) => void;
+};
+
+const ALBUM_ACTIONS: Partial<Record<ChipStatus, string>> = {
+  in_progress: "Listening",
+  completed: "Listened",
+  deferred: "Later",
+  skipped: "Skip",
 };
 
 export default function AlbumsView({ albums, setAlbums }: AlbumsProps) {
@@ -17,7 +25,9 @@ export default function AlbumsView({ albums, setAlbums }: AlbumsProps) {
             <div
               key={album?.id}
               className={`border p-4 rounded transition-opacity ${
-                album.status === "completed" ? "opacity-40" : "opacity-100"
+                album.status === "completed" || album.status === "skipped"
+                  ? "opacity-40"
+                  : "opacity-100"
               }`}
             >
               {/* <div key={album?.id} className="flex flex-col "> */}
@@ -29,14 +39,13 @@ export default function AlbumsView({ albums, setAlbums }: AlbumsProps) {
               <div className="text-sm text-gray-500">
                 {album?.artist}
                 {/* {album?.artists.map((a: any) => a.name).join(", ")} */}
-                <button
-                  className="text-sm underline"
-                  onClick={() => handleToggle(album.id, albums, setAlbums)}
-                >
-                  {album.status === "completed"
-                    ? "Mark as Unheard"
-                    : "Mark as Completed"}
-                </button>
+                <ChipActions
+                  status={album.status}
+                  labels={ALBUM_ACTIONS}
+                  onChange={(status) =>
+                    handleStatus(album.id, status, albums, setAlbums)
+                  }
+                />
               </div>
             </div>
           );
@@ -46,13 +55,13 @@ export default function AlbumsView({ albums, setAlbums }: AlbumsProps) {
   );
 }
 
-async function handleToggle(
+async function handleStatus(
   id: string,
+  status: ChipStatus,
   albums: Album[],
   setAlbums: (albums: Album[]) => void,
 ) {
-  const updatedAlbum = await toggleAlbumStatus(id);
-  const reloadAlbums = albums.map((a) => (a.id === id ? updatedAlbum! : a));
-  setAlbums(reloadAlbums);
-  //   await reloadAlbums(); // however you're refreshing state
+  const updatedAlbum = await setAlbumStatus(id, status);
+  if (!updatedAlbum) return;
+  setAlbums(albums.map((a) => (a.id === id ? updatedAlbum : a)));
 }

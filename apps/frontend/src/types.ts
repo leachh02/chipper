@@ -1,3 +1,13 @@
+// Where an item is in the backlog. Shared by every kind of item Chipper tracks.
+export type ChipStatus =
+  | "queued"
+  | "in_progress"
+  | "completed"
+  | "skipped"
+  | "deferred";
+
+export type ItemType = "video" | "album";
+
 export type Video = {
   id: string;
   title: string;
@@ -8,21 +18,31 @@ export type Video = {
 
   importedAt: number;
   lastSeenAt: number;
-  status: "queued" | "watched" | "skipped";
+  status: ChipStatus;
 };
 
-export type VideoEvent = {
+// One entry per status change, for history and future stats
+export type ChipEvent = {
   id: string;
-  videoId: string;
-  type: "watched" | "skipped" | "deferred";
+  itemType: ItemType;
+  itemId: string;
+  status: ChipStatus;
   timestamp: number;
+};
+
+export type YouTubePreferences = {
+  sortBy: "title" | "channel" | "duration";
+  sortOrder: "asc" | "desc";
+  thumbnailsFirst: boolean;
+  durationRange: [number, number];
+  statusFilter: ChipStatus[];
 };
 
 export type Preferences = {
   id: "singleton";
-  sortBy: "duration" | "date" | "priority";
   maxDailyMinutes: number;
   hideShorts: boolean;
+  youtube: YouTubePreferences;
 };
 
 export type Meta = {
@@ -55,7 +75,7 @@ export type Album = {
   genres: string[];
 
   // personal layer
-  status: "unheard" | "completed" | "in_progress";
+  status: ChipStatus;
   completed_at: string | null;
   rating: number | null;
 

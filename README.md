@@ -42,13 +42,13 @@ You'll need Node.js and Chrome (or another Chromium browser).
 - [x] Remove the old Spring backend
 - [x] Add a licence (GPL-3.0)
 - [x] Add `.env.example` and getting-started instructions
-- [ ] Scrub the old database password from git history
+- [x] Scrub the old database password from git history
 
 ### Phase 1: The shared "chip" model
 
-- [ ] Watched / skipped / deferred status for videos, recorded as video events
-- [ ] Line album statuses up with the same model (unheard, in progress, completed, loved)
-- [ ] Persist preferences (sort, filters, thumbnails toggle, duration range) in IndexedDB
+- [x] Watched / skipped / deferred status for videos, recorded as video events
+- [x] Line album statuses up with the same model (queued, listening, listened, later, skipped)
+- [x] Persist preferences (sort, filters, thumbnails toggle, duration range) in IndexedDB
 
 ### Phase 2: YouTube Watch Later
 

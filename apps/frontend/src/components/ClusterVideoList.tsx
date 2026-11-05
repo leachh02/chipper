@@ -1,16 +1,18 @@
 import { useState } from "react";
-import type { Video } from "../types";
+import type { ChipStatus, Video } from "../types";
 import VideoList from "./VideoList";
 
 interface Props {
   videos: Video[];
   clusters: { [label: string]: string[] };
   setSelectedVideo: (url: string) => void;
+  onStatusChange: (id: string, status: ChipStatus) => void;
 }
 export default function ClusteredVideoList({
   videos,
   clusters,
   setSelectedVideo,
+  onStatusChange,
 }: Props) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -34,7 +36,11 @@ export default function ClusteredVideoList({
           </button>
 
           {expanded === label && (
-            <VideoList videos={vids} setSelectedVideo={setSelectedVideo} />
+            <VideoList
+              videos={vids}
+              setSelectedVideo={setSelectedVideo}
+              onStatusChange={onStatusChange}
+            />
           )}
         </div>
       ))}

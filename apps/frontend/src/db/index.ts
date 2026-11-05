@@ -1,6 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import { DB_NAME, DB_VERSION } from "./constants";
-import type { Video, VideoEvent, Preferences, Meta, Album } from "../types";
+import type { Video, ChipEvent, Preferences, Meta, Album } from "../types";
 
 export interface ChipperDB extends DBSchema {
   videos: {
@@ -11,10 +11,10 @@ export interface ChipperDB extends DBSchema {
     key: string;
     value: Album;
   };
-  videoEvents: {
+  events: {
     key: string;
-    value: VideoEvent;
-    indexes: { byVideo: string };
+    value: ChipEvent;
+    indexes: { byItem: [string, string] };
   };
   preferences: {
     key: string;
@@ -31,16 +31,14 @@ let dbPromise: Promise<IDBPDatabase<ChipperDB>> | null = null;
 export function getDB() {
   if (!dbPromise) {
     dbPromise = openDB<ChipperDB>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
+      async upgrade(db, oldVersion, _newVersion, transaction) {
         if (!db.objectStoreNames.contains("videos")) {
           db.createObjectStore("videos", { keyPath: "id" });
         }
 
-        if (!db.objectStoreNames.contains("videoEvents")) {
-          const store = db.createObjectStore("videoEvents", {
-            keyPath: "id",
-          });
-          store.createIndex("byVideo", "videoId");
+        if (!db.objectStoreNames.contains("events")) {
+          const store = db.createObjectStore("events", { keyPath: "id" });
+          store.createIndex("byItem", ["itemType", "itemId"]);
         }
 
         if (!db.objectStoreNames.contains("preferences")) {
@@ -52,6 +50,23 @@ export function getDB() {
         }
         if (!db.objectStoreNames.contains("albums")) {
           db.createObjectStore("albums", { keyPath: "id" });
+        }
+
+        // v4: videoEvents was replaced by the shared events store, and
+        // albums moved from "unheard" to the shared "queued" status
+        const untypedDB = db as unknown as IDBPDatabase;
+        if (untypedDB.objectStoreNames.contains("videoEvents")) {
+          untypedDB.deleteObjectStore("videoEvents");
+        }
+
+        if (oldVersion > 0 && oldVersion < 4) {
+          let cursor = await transaction.objectStore("albums").openCursor();
+          while (cursor) {
+            if ((cursor.value.status as string) === "unheard") {
+              await cursor.update({ ...cursor.value, status: "queued" });
+            }
+            cursor = await cursor.continue();
+          }
         }
       },
     });

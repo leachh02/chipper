@@ -1,11 +1,28 @@
 import { useEffect, useState } from "react";
-import type { Video } from "../types";
+import type {
+  ChipStatus,
+  Preferences,
+  Video,
+  YouTubePreferences,
+} from "../types";
 import * as Slider from "@radix-ui/react-slider";
 import VideoList from "./VideoList";
 import ClusteredVideoList from "./ClusterVideoList";
 import VideoPlayer from "./VideoPlayer";
 import SyncWatchLaterButton from "./SyncWatchLaterButton";
-import { getAllVideos } from "../db/queries";
+import {
+  getAllVideos,
+  getPreferences,
+  savePreferences,
+  setVideoStatus,
+} from "../db/queries";
+
+const STATUS_FILTERS: { label: string; statuses: ChipStatus[] }[] = [
+  { label: "To watch", statuses: ["queued", "in_progress"] },
+  { label: "Later", statuses: ["deferred"] },
+  { label: "Watched", statuses: ["completed"] },
+  { label: "Skipped", statuses: ["skipped"] },
+];
 
 const toSeconds = (d: string) =>
   d.split(":").reduce((acc, val) => acc * 60 + parseInt(val), 0);
@@ -40,14 +57,8 @@ async function categorizeVideos(videoData: Video[]) {
 export default function YTWatchList() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [sortBy, setSortBy] = useState<"title" | "channel" | "duration">(
-    "duration",
-  );
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [preferences, setPreferences] = useState<Preferences | null>(null);
   const [search, setSearch] = useState("");
-  const [hasThumbnails, setHasThumbnails] = useState(true);
-  // Duration filter range (minutes)
-  const [range, setRange] = useState<[number, number]>([0, 120]); // 0–120 min
   const [showAICategories, setShowAICategories] = useState(false);
   const [clusters, setClusters] = useState<{ [label: string]: string[] }>({});
   const [selectedVideo, setSelectedVideo] = useState<string>("");
@@ -60,19 +71,54 @@ export default function YTWatchList() {
     load();
   }, [loading]);
 
+  useEffect(() => {
+    getPreferences().then(setPreferences);
+  }, []);
+
+  if (!preferences) return null;
+
+  const { sortBy, sortOrder, thumbnailsFirst, durationRange, statusFilter } =
+    preferences.youtube;
+
+  function updatePreferences(changes: Partial<YouTubePreferences>) {
+    if (!preferences) return;
+    const next = {
+      ...preferences,
+      youtube: { ...preferences.youtube, ...changes },
+    };
+    setPreferences(next);
+    savePreferences(next);
+  }
+
+  function toggleStatusFilter(statuses: ChipStatus[]) {
+    const isOn = statuses.every((s) => statusFilter.includes(s));
+    updatePreferences({
+      statusFilter: isOn
+        ? statusFilter.filter((s) => !statuses.includes(s))
+        : [...statusFilter, ...statuses],
+    });
+  }
+
+  async function updateStatus(id: string, status: ChipStatus) {
+    const updated = await setVideoStatus(id, status);
+    if (!updated) return;
+    setVideos((current) => current.map((v) => (v.id === id ? updated : v)));
+  }
+
   const filtered = videos?.filter((v) => {
     const query = search.toLowerCase();
     const mins = parseDurationToMinutes(v.duration);
     return (
+      statusFilter.includes(v.status) &&
       (v.title.toLowerCase().includes(query) ||
         v.channel.toLowerCase().includes(query)) &&
-      mins >= range[0] &&
-      mins <= range[1]
+      mins >= durationRange[0] &&
+      mins <= durationRange[1]
     );
   });
 
   const sorted = [...filtered].sort((a, b) => {
-    if (hasThumbnails) {
+    if (thumbnailsFirst) {
       if (!!a.thumbnail && !b.thumbnail) return -1; // a first
       if (!a.thumbnail && !!b.thumbnail) return 1; // b first
     }
@@ -117,7 +163,9 @@ export default function YTWatchList() {
       <select
         className="border p-2 m-2"
         value={sortBy}
-        onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+        onChange={(e) =>
+          updatePreferences({ sortBy: e.target.value as typeof sortBy })
+        }
       >
         <option value="title">Alphabetical</option>
         <option value="channel">Channel</option>
@@ -126,16 +174,20 @@ export default function YTWatchList() {
       <select
         className="border p-2"
         value={sortOrder}
-        onChange={(e) => setSortOrder(e.target.value as typeof sortOrder)}
+        onChange={(e) =>
+          updatePreferences({
+            sortOrder: e.target.value as typeof sortOrder,
+          })
+        }
       >
         <option value="asc">Ascending</option>
         <option value="desc">Descending</option>
       </select>
       <button
         className="border p-2 rounded"
-        onClick={() => setHasThumbnails(!hasThumbnails)}
+        onClick={() => updatePreferences({ thumbnailsFirst: !thumbnailsFirst })}
       >
-        {hasThumbnails
+        {thumbnailsFirst
           ? "Thumbnails Required First"
           : "Some Thumbnails Missing"}
       </button>
@@ -156,19 +208,37 @@ export default function YTWatchList() {
         AI categories
       </button>
 
+      <div className="flex gap-2 my-2">
+        {STATUS_FILTERS.map(({ label, statuses }) => {
+          const on = statuses.every((s) => statusFilter.includes(s));
+          return (
+            <label key={label} className="flex items-center gap-1 text-sm">
+              <input
+                type="checkbox"
+                checked={on}
+                onChange={() => toggleStatusFilter(statuses)}
+              />
+              {label}
+            </label>
+          );
+        })}
+      </div>
+
       {/* Slider Control */}
       {sortBy == "duration" && (
         <div className="space-y-2">
           <p className="font-medium">
-            Duration filter: {range[0]}–{range[1]} min
+            Duration filter: {durationRange[0]}–{durationRange[1]} min
           </p>
           <Slider.Root
             className="relative flex items-center select-none touch-none w-[300px] h-[40px]"
-            value={range}
+            value={durationRange}
             min={0}
             max={180} // 3h max
             step={1}
-            onValueChange={(val) => setRange(val as [number, number])}
+            onValueChange={(val) =>
+              updatePreferences({ durationRange: val as [number, number] })
+            }
           >
             <Slider.Track className="relative h-[6px] grow rounded-full bg-gray-500">
               <Slider.Range className="absolute h-full rounded-full bg-white" />
@@ -187,9 +257,14 @@ export default function YTWatchList() {
           videos={sorted}
           clusters={clusters}
           setSelectedVideo={setSelectedVideo}
+          onStatusChange={updateStatus}
         />
       ) : (
-        <VideoList videos={sorted} setSelectedVideo={setSelectedVideo} />
+        <VideoList
+          videos={sorted}
+          setSelectedVideo={setSelectedVideo}
+          onStatusChange={updateStatus}
+        />
       )}
     </div>
   );

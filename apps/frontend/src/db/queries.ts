@@ -1,5 +1,15 @@
 import { getDB } from "./index";
-import type { Video, Meta, RawVideo, Album } from "../types";
+import { DEFAULT_PREFERENCES } from "./init";
+import type {
+  Video,
+  Meta,
+  RawVideo,
+  Album,
+  ChipStatus,
+  ChipEvent,
+  ItemType,
+  Preferences,
+} from "../types";
 
 export async function getAllVideos(): Promise<Video[]> {
   const db = await getDB();
@@ -70,19 +80,74 @@ export async function getAllAlbums(): Promise<Album[]> {
   return db.getAll("albums");
 }
 
-export async function toggleAlbumStatus(
+function newEvent(
+  itemType: ItemType,
+  itemId: string,
+  status: ChipStatus,
+): ChipEvent {
+  return {
+    id: crypto.randomUUID(),
+    itemType,
+    itemId,
+    status,
+    timestamp: Date.now(),
+  };
+}
+
+export async function setVideoStatus(
   id: string,
+  status: ChipStatus,
+): Promise<Video | undefined> {
+  const db = await getDB();
+  const tx = db.transaction(["videos", "events"], "readwrite");
+
+  const video = await tx.objectStore("videos").get(id);
+  if (!video) return;
+
+  video.status = status;
+  await tx.objectStore("videos").put(video);
+  await tx.objectStore("events").add(newEvent("video", id, status));
+  await tx.done;
+
+  return video;
+}
+
+export async function setAlbumStatus(
+  id: string,
+  status: ChipStatus,
 ): Promise<Album | undefined> {
   const db = await getDB();
+  const tx = db.transaction(["albums", "events"], "readwrite");
 
-  const album = await db.get("albums", id);
+  const album = await tx.objectStore("albums").get(id);
   if (!album) return;
 
-  album.status = album.status === "completed" ? "unheard" : "completed";
-
+  album.status = status;
   album.completed_at =
-    album.status === "completed" ? new Date().toISOString() : null;
+    status === "completed" ? new Date().toISOString() : null;
 
-  await db.put("albums", album);
+  await tx.objectStore("albums").put(album);
+  await tx.objectStore("events").add(newEvent("album", id, status));
+  await tx.done;
+
   return album;
+}
+
+export async function getPreferences(): Promise<Preferences> {
+  const db = await getDB();
+  const stored = await db.get("preferences", "singleton");
+
+  // Fill in anything added since the preferences were first saved
+  return {
+    id: "singleton",
+    maxDailyMinutes:
+      stored?.maxDailyMinutes ?? DEFAULT_PREFERENCES.maxDailyMinutes,
+    hideShorts: stored?.hideShorts ?? DEFAULT_PREFERENCES.hideShorts,
+    youtube: { ...DEFAULT_PREFERENCES.youtube, ...stored?.youtube },
+  };
+}
+
+export async function savePreferences(preferences: Preferences) {
+  const db = await getDB();
+  await db.put("preferences", preferences);
 }
