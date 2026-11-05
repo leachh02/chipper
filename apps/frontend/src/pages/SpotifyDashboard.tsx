@@ -6,7 +6,7 @@ import {
   ensureValidToken,
   getAllSavedAlbums,
 } from "../utils/spotify";
-import { getAllAlbums, saveAlbumsToDB } from "../db/queries";
+import { getAllAlbums, importAlbums } from "../db/queries";
 import type { Album } from "../types";
 
 export default function SpotifyDashboard() {
@@ -17,13 +17,14 @@ export default function SpotifyDashboard() {
 
   useEffect(() => {
     async function init() {
+      // Show cached albums straight away, then refresh from Spotify
       const cached = await getAllAlbums();
       if (cached.length > 0) {
         setAlbums(cached);
-        setLoading(false);
         setIsAuthenticated(true);
-        return;
+        setLoading(false);
       }
+
       await handleSpotifyCallback();
       await ensureValidToken();
 
@@ -37,8 +38,7 @@ export default function SpotifyDashboard() {
       setIsAuthenticated(true);
 
       const savedAlbums = await getAllSavedAlbums();
-      setAlbums(savedAlbums);
-      saveAlbumsToDB(savedAlbums);
+      setAlbums(await importAlbums(savedAlbums));
 
       setLoading(false);
     }

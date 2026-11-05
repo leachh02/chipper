@@ -43,12 +43,26 @@ export async function importRawVideos(rawVideos: RawVideo[]) {
   }
 }
 
-export async function saveAlbumsToDB(albums: Album[]) {
+export async function importAlbums(albums: Album[]): Promise<Album[]> {
   const db = await getDB();
+  const imported: Album[] = [];
 
   for (const album of albums) {
-    await db.put("albums", album);
+    const existing = await db.get("albums", album.id);
+
+    const merged: Album = {
+      ...album,
+      status: existing?.status ?? album.status,
+      completed_at: existing?.completed_at ?? album.completed_at,
+      rating: existing?.rating ?? album.rating,
+      genres: existing?.genres.length ? existing.genres : album.genres,
+    };
+
+    await db.put("albums", merged);
+    imported.push(merged);
   }
+
+  return imported;
 }
 
 export async function getAllAlbums(): Promise<Album[]> {
