@@ -1,103 +1,91 @@
-# Chipper: An AI Watchlist Depleter
+# Chipper: An Entertainment Backlog Depleter
 
-I would like to dedicate this project to family. Use Chipper to get through your to do lists, watch laters, episodes, as fast as possible, so that you can to spend valuable (and decluttered) time with them. Ideally, you prioritse them before you yt vids anyway.
+I would like to dedicate this project to family. Use Chipper to get through your watch laters, albums and episodes as fast as possible, so that you can spend valuable (and decluttered) time with them. Ideally, you prioritise them before your YouTube videos anyway.
 
-Chip away at your entertainment backlog & optimise the way you consume media.
+Chip away at your entertainment backlog and optimise the way you consume media.
 
-# TODO
+Chipper is free and open source, and always will be. It runs in your browser and keeps your data on your own machine.
 
-## Code & Design
+## What it does
 
-- [ ] improve design
-- [ ] clean up components
-- [ ] clean up code
-- [ ] light and dark mode
-- [ ] remove bottom instructions (read them first though, they may be handy)
-- [ ] Fix/confirm how the entire projct work
-- [ ] Update the initial spiel and include instruction on how to get started
+- **YouTube Watch Later**: syncs your Watch Later playlist through the Chipper browser extension, then lets you search, sort and filter it by duration, see your total watch time and play videos in place.
+- **Spotify albums**: connects to your Spotify account, pulls in your saved albums and lets you mark them as completed.
 
-## Must Have Product
+## Getting started
 
-- [ ] Be able to Close video and don't let it take you to a new yt tab
-- [x] Have a better flow (entrance page -> YT Dashboard)
-- [ ] Get domain and publish
-- [ ] use the indexeddb to genuinely save preferences
+You'll need Node.js and Chrome (or another Chromium browser).
 
-## Syncing
+1. **Load the extension.** Open `chrome://extensions`, turn on Developer mode, click **Load unpacked** and pick `apps/extension`. Copy the extension ID it shows.
+2. **Configure the frontend.** Copy `apps/frontend/.env.example` to `apps/frontend/.env`, then paste in the extension ID. For Spotify, create an app on the [Spotify developer dashboard](https://developer.spotify.com/dashboard), add `http://127.0.0.1:5173/dashboard/spotify` as a redirect URI and paste in its client ID.
+3. **Run it.**
 
-- [ ] Delta sync vs full sync - for sync performance, it would be good to sort YT WL by date added and check against the existing chip list. Once you come across an exisitng video, it is safe to say the rest of the list should already be there. This has it's flaws, watching something further down the list, the links will all be off. Something to reconcile with the "chip" feature. Something users should be able to select before syncing.
-- [ ] To sync with yt, will need a delete function. perhaps in chipper, have a way to 'chip' away at the vids. these can be saved in a 'chiplist' so when you go to delete from youtube, the exetension goes trough the chip list and deletes them for you
-- [ ] support csv watchlater playlist import
+   ```bash
+   cd apps/frontend
+   npm install
+   npm run dev
+   ```
 
-## Spotify Integration
+   Then open http://127.0.0.1:5173.
 
-- [x] Connect to Spotify
-- [ ] Implement podcasts
-- [ ] Add Album trackings
-  - [ ] You can set to listen (headphones)
-  - [ ] You can love, if you don't like it, why's it in your library?? (heart)
-  - [ ] Listen later priorities
-- [ ] Get and filter by genre
-- [ ] Make sure genre enrichment tracks which albums didn't get a genre
-- [ ] Develop a smart way to check whether albums have been added or removed on spotify
-- [ ] Filter by decade
-- [ ] sort by release date, artist, name
-- [ ] get runtime, number of track, link to spotify to listen
-- [ ] Make the albums a proper card
+## Project layout
 
-## Future Product
+| Path | What it is |
+| --- | --- |
+| `apps/frontend` | The app: React, Vite and Tailwind, storing everything in IndexedDB |
+| `apps/extension` | Chrome extension that reads your Watch Later playlist from YouTube |
+| `apps/ai` | Experimental video clustering service (Python), planned for the self-hosted version |
 
-- [ ] Find a way to get all thumbnails
-- [ ] Likely need to make AI clusters a premium feature, use the cloud to host a dockerised AI service that can be used instead of anything local. it will slow down the application too much
-  - [ ] for ai clusters, user should be able to input how many categories they'd like and include warning that not giving a number will result in the ai experimenting up to 30 groupings
-- [ ] Make it a product, if this becomes popular, syncing across devices via cloud could be beneficial, this may cost money though, but will always be optional
+## Roadmap
 
-## Where things should go moving forward
+### Phase 0: Housekeeping
 
-Make chipper a self hosting service. Use a db like mysql, I don't think the online version is neccessary at all anymore. So try to convert the client side DB to a mysql DB. Ideally behave similarly to home server software, applications like Jellyfin are a good inspiration, not in terms of functionality but the architecture, how it is very docker freidnly etc.
+- [x] Remove the old Spring backend
+- [x] Add a licence (GPL-3.0)
+- [x] Add `.env.example` and getting-started instructions
+- [ ] Scrub the old database password from git history
 
-## Expanding the ESLint configuration
+### Phase 1: The shared "chip" model
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- [ ] Watched / skipped / deferred status for videos, recorded as video events
+- [ ] Line album statuses up with the same model (unheard, in progress, completed, loved)
+- [ ] Persist preferences (sort, filters, thumbnails toggle, duration range) in IndexedDB
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-});
-```
+### Phase 2: YouTube Watch Later
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- [ ] Make sync robust: centralise selectors, refuse empty syncs, scroll until the count stops changing
+- [ ] Get thumbnails for every video from the video ID
+- [ ] Close the player without opening a new YouTube tab; mark videos watched when they end
+- [ ] Detect videos removed on YouTube using `lastSeenAt`
+- [ ] Delta sync (stop at the first known video), with full sync still available
+- [ ] Chip list, plus removing chipped videos from Watch Later through the extension
+- [ ] Import a Watch Later playlist from CSV
 
-```js
-// eslint.config.js
-import reactX from "eslint-plugin-react-x";
-import reactDom from "eslint-plugin-react-dom";
+### Phase 3: Spotify
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    "react-x": reactX,
-    "react-dom": reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs["recommended-typescript"].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-});
-```
+- [ ] Detect added and removed albums; show an error when a fetch fails
+- [ ] Proper album card with runtime, track count and a link to Spotify
+- [ ] Sort by release date, artist or name; filter by decade
+- [ ] To-listen (headphones), love (heart) and listen-later priority
+- [ ] Genre enrichment that records which albums got none, plus a genre filter
+- [ ] Podcasts
+
+### Phase 4: The depleter
+
+- [ ] A queue across services with a time budget ("I have 40 minutes, what should I clear?")
+
+### Phase 5: Polish and public release
+
+- [ ] Design pass: clean up components, light and dark mode, getting-started guide on the landing page
+- [ ] Self-host friendly: configurable extension ID and origins, contributor docs, issue templates
+- [ ] Publish the extension (Chrome Web Store, maybe Firefox) and host the site on a domain
+- [ ] CI for typecheck, lint and build; tests for the import and merge logic
+
+### Phase 6: Later, optional
+
+- [ ] Self-hosted server with cross-device sync, Docker friendly (Jellyfin is good architectural inspiration)
+  - [ ] AI clusters, available in the self-hosted version only, with a user-chosen number of groups
+- [ ] Split the frontend bundle
+
+## Licence
+
+Chipper is licensed under the [GNU General Public License v3.0](LICENSE).
