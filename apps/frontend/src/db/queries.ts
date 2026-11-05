@@ -1,5 +1,5 @@
 import { getDB } from "./index";
-import type { Video, Meta, RawVideo } from "../types";
+import type { Video, Meta, RawVideo, Album } from "../types";
 
 export async function getAllVideos(): Promise<Video[]> {
   const db = await getDB();
@@ -41,4 +41,34 @@ export async function importRawVideos(rawVideos: RawVideo[]) {
 
     await db.put("videos", video);
   }
+}
+
+export async function saveAlbumsToDB(albums: Album[]) {
+  const db = await getDB();
+
+  for (const album of albums) {
+    await db.put("albums", album);
+  }
+}
+
+export async function getAllAlbums(): Promise<Album[]> {
+  const db = await getDB();
+  return db.getAll("albums");
+}
+
+export async function toggleAlbumStatus(
+  id: string,
+): Promise<Album | undefined> {
+  const db = await getDB();
+
+  const album = await db.get("albums", id);
+  if (!album) return;
+
+  album.status = album.status === "completed" ? "unheard" : "completed";
+
+  album.completed_at =
+    album.status === "completed" ? new Date().toISOString() : null;
+
+  await db.put("albums", album);
+  return album;
 }

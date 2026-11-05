@@ -22,12 +22,12 @@ def label_clusters(clusters):
     return cluster_labels
 
 def embed_and_cluster(videos):
-    # Build a mapping from title (with channel) to video index
+    # Build a mapping from title (with channel) to video id
     title_to_index = {}
     for v in videos:
-        if "title" in v and "channel" in v and "index" in v:
+        if "title" in v and "channel" in v and "id" in v:
             key = f'{v["title"]} ({v["channel"]})'
-            title_to_index[key] = v["index"]
+            title_to_index[key] = v["id"]
 
     # titles = [v["title"] for v in videos if "title" in v]
     titles = list(title_to_index.keys())

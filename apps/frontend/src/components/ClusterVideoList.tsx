@@ -4,7 +4,7 @@ import VideoList from "./VideoList";
 
 interface Props {
   videos: Video[];
-  clusters: { [label: string]: number[] };
+  clusters: { [label: string]: string[] };
   setSelectedVideo: (url: string) => void;
 }
 export default function ClusteredVideoList({
@@ -18,7 +18,7 @@ export default function ClusteredVideoList({
   const clusterMap: Record<string, Video[]> = {};
   for (const [label, ids] of Object.entries(clusters)) {
     clusterMap[label] = ids
-      .map((id) => videos.find((v) => v.index === id))
+      .map((id) => videos.find((v) => v.id === id))
       .filter(Boolean) as Video[];
   }
 

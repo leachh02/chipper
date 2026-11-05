@@ -4,11 +4,11 @@ import * as Slider from "@radix-ui/react-slider";
 import VideoList from "./VideoList";
 import ClusteredVideoList from "./ClusterVideoList";
 import VideoPlayer from "./VideoPlayer";
-import { getAllVideos, importRawVideos } from "../db/queries";
+import SyncWatchLaterButton from "./SyncWatchLaterButton";
+import { getAllVideos } from "../db/queries";
 
 const toSeconds = (d: string) =>
   d.split(":").reduce((acc, val) => acc * 60 + parseInt(val), 0);
-const EXTENSION_ID = import.meta.env.VITE_EXTENSIONS_ID;
 
 // utils/parseDuration.ts
 function parseDurationToMinutes(duration: string): number {
@@ -20,42 +20,6 @@ function parseDurationToMinutes(duration: string): number {
   if (parts[2]) totalMinutes += parts[2] * 60; // hours -> minutes
 
   return totalMinutes;
-}
-
-function RefreshWatchLaterButton({
-  loading,
-  setLoading,
-}: {
-  loading: boolean;
-  setLoading: (loading: boolean) => void;
-}) {
-  async function onClick() {
-    if (!window.chrome?.runtime?.sendMessage) {
-      alert("Chipper extension not installed");
-      return;
-    }
-    setLoading(true);
-    chrome.runtime.sendMessage(
-      EXTENSION_ID,
-      { type: "START_CHIPPER_SCRIPT" },
-      undefined,
-      async (response: any) => {
-        if (response.error) {
-          alert("Sync failed: " + response.error);
-          setLoading(false);
-          return;
-        }
-        await importRawVideos(response.data.chipper_result.rawVideos);
-        setLoading(false);
-      },
-    );
-  }
-
-  return (
-    <button onClick={onClick} disabled={loading}>
-      {loading ? "Syncing..." : "Sync Watch Later"}
-    </button>
-  );
 }
 
 async function categorizeVideos(videoData: Video[]) {
@@ -85,7 +49,7 @@ export default function YTWatchList() {
   // Duration filter range (minutes)
   const [range, setRange] = useState<[number, number]>([0, 120]); // 0–120 min
   const [showAICategories, setShowAICategories] = useState(false);
-  const [clusters, setClusters] = useState<{ [label: string]: number[] }>({});
+  const [clusters, setClusters] = useState<{ [label: string]: string[] }>({});
   const [selectedVideo, setSelectedVideo] = useState<string>("");
 
   useEffect(() => {
@@ -153,7 +117,7 @@ export default function YTWatchList() {
       <select
         className="border p-2 m-2"
         value={sortBy}
-        onChange={(e) => setSortBy(e.target.value as any)}
+        onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
       >
         <option value="title">Alphabetical</option>
         <option value="channel">Channel</option>
@@ -162,7 +126,7 @@ export default function YTWatchList() {
       <select
         className="border p-2"
         value={sortOrder}
-        onChange={(e) => setSortOrder(e.target.value as any)}
+        onChange={(e) => setSortOrder(e.target.value as typeof sortOrder)}
       >
         <option value="asc">Ascending</option>
         <option value="desc">Descending</option>
@@ -175,8 +139,9 @@ export default function YTWatchList() {
           ? "Thumbnails Required First"
           : "Some Thumbnails Missing"}
       </button>
-      <RefreshWatchLaterButton loading={loading} setLoading={setLoading} />
+      <SyncWatchLaterButton loading={loading} setLoading={setLoading} />
       <button
+        hidden={true} //TODO: Commented out for the time being - will add back in once AI categorization is properly setup
         onClick={async () => {
           if (showAICategories) {
             setShowAICategories(false);

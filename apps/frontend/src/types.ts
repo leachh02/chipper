@@ -40,3 +40,27 @@ export type RawVideo = {
   thumbnail?: string;
   addedAt?: number;
 };
+
+export type Album = {
+  id: string;
+  name: string;
+  artist: string;
+  artist_id: string;
+  image: string;
+  release_date: string;
+  total_tracks: number;
+  runtime_ms: number;
+
+  // enrichment
+  genres: string[];
+
+  // personal layer
+  status: "unheard" | "completed" | "in_progress";
+  completed_at: string | null;
+  rating: number | null;
+
+  // system
+  added_at: string;
+  last_synced: string;
+  url: string;
+};

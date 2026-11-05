@@ -1,11 +1,15 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import { DB_NAME, DB_VERSION } from "./constants";
-import type { Video, VideoEvent, Preferences, Meta } from "../types";
+import type { Video, VideoEvent, Preferences, Meta, Album } from "../types";
 
 export interface ChipperDB extends DBSchema {
   videos: {
     key: string;
     value: Video;
+  };
+  albums: {
+    key: string;
+    value: Album;
   };
   videoEvents: {
     key: string;
@@ -45,6 +49,9 @@ export function getDB() {
 
         if (!db.objectStoreNames.contains("meta")) {
           db.createObjectStore("meta", { keyPath: "id" });
+        }
+        if (!db.objectStoreNames.contains("albums")) {
+          db.createObjectStore("albums", { keyPath: "id" });
         }
       },
     });
