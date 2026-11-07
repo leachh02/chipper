@@ -4,11 +4,21 @@ import type { ChipStatus, Video } from "../types";
 
 type Props = {
   video: Video;
+  nextVideo?: Video;
+  onNext: () => void;
+  onEnded: (id: string) => void;
   onClose: () => void;
   onStatusChange: (id: string, status: ChipStatus) => void;
 };
 
-export default function VideoPlayer({ video, onClose, onStatusChange }: Props) {
+export default function VideoPlayer({
+  video,
+  nextVideo,
+  onNext,
+  onEnded,
+  onClose,
+  onStatusChange,
+}: Props) {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -31,6 +41,16 @@ export default function VideoPlayer({ video, onClose, onStatusChange }: Props) {
         <div className="flex items-center justify-between gap-4 mb-2 text-white">
           <h2 className="font-semibold truncate">{video.title}</h2>
           <div className="flex items-center gap-3 shrink-0">
+            {nextVideo && (
+              <button
+                type="button"
+                className="text-sm px-2 py-1 rounded"
+                title={`Next: ${nextVideo.title}`}
+                onClick={onNext}
+              >
+                Next ›
+              </button>
+            )}
             <a
               href={video.url}
               target="_blank"
@@ -51,6 +71,8 @@ export default function VideoPlayer({ video, onClose, onStatusChange }: Props) {
         </div>
         <div className="aspect-video">
           <ReactPlayer
+            // A fresh player per video, so the next one starts from the top
+            key={video.id}
             src={video.url}
             width="100%"
             height="100%"
@@ -61,7 +83,8 @@ export default function VideoPlayer({ video, onClose, onStatusChange }: Props) {
                 onStatusChange(video.id, "in_progress");
               }
             }}
-            onEnded={() => onStatusChange(video.id, "completed")}
+            // Marks it watched and moves on to the next video
+            onEnded={() => onEnded(video.id)}
           />
         </div>
       </div>

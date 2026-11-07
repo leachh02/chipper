@@ -121,6 +121,17 @@ export default function YTWatchList() {
     return sortOrder === "asc" ? cmp : -cmp;
   });
 
+  // The next video in the list as it's currently sorted and filtered
+  const nextVideo = selectedId
+    ? sorted[sorted.findIndex((v) => v.id === selectedId) + 1]
+    : undefined;
+
+  async function finishVideo(id: string) {
+    const next = nextVideo;
+    await updateStatus(id, "completed");
+    setSelectedId(next?.id ?? null);
+  }
+
   // Total watch time in seconds
   const totalSeconds = sorted.reduce(
     (sum, v) => sum + durationToSeconds(v.duration),
@@ -230,6 +241,9 @@ export default function YTWatchList() {
       {selectedVideo && (
         <VideoPlayer
           video={selectedVideo}
+          nextVideo={nextVideo}
+          onNext={() => setSelectedId(nextVideo?.id ?? null)}
+          onEnded={finishVideo}
           onClose={closePlayer}
           onStatusChange={updateStatus}
         />

@@ -21,6 +21,11 @@ type Props = {
 // oEmbed requests to run at once during a CSV import
 const CSV_CONCURRENCY = 4;
 
+// 1 -> "1 video", 2 -> "2 videos"
+function countVideos(count: number) {
+  return `${count} ${count === 1 ? "video" : "videos"}`;
+}
+
 export default function WatchLaterActions({ videos, onChange }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState("");
@@ -56,16 +61,20 @@ export default function WatchLaterActions({ videos, onChange }: Props) {
       });
       await updateMeta(Date.now());
 
-      const removed = result.complete
-        ? `, ${summary.removed} no longer in Watch Later`
-        : "";
-      return `Synced: ${summary.added} new${removed}.`;
+      const parts = [];
+      if (summary.added) parts.push(`${countVideos(summary.added)} new`);
+      if (summary.removed) {
+        parts.push(`${countVideos(summary.removed)} no longer in Watch Later`);
+      }
+      return parts.length
+        ? `Synced: ${parts.join(", ")}.`
+        : "Synced: you're up to date.";
     });
   }
 
   function clearChipList() {
     const confirmed = window.confirm(
-      `Remove ${chipList.length} watched or skipped videos from your YouTube Watch Later? Chipper keeps its own record of them.`,
+      `Remove ${countVideos(chipList.length)} you've watched or skipped from your YouTube Watch Later? Chipper keeps its own record of them.`,
     );
     if (!confirmed) return;
 
@@ -76,10 +85,12 @@ export default function WatchLaterActions({ videos, onChange }: Props) {
       // Videos that weren't found have already left Watch Later
       await markRemovedFromWatchLater([...result.removed, ...result.notFound]);
 
-      const failed = result.failed.length
-        ? ` ${result.failed.length} couldn't be removed and are still in Watch Later.`
+      const removedCount = result.removed.length + result.notFound.length;
+      const failedCount = result.failed.length;
+      const failed = failedCount
+        ? ` ${countVideos(failedCount)} couldn't be removed and ${failedCount === 1 ? "is" : "are"} still there; try again.`
         : "";
-      return `Removed ${result.removed.length + result.notFound.length} from Watch Later.${failed}`;
+      return `Removed ${countVideos(removedCount)} from Watch Later.${failed}`;
     });
   }
 
@@ -97,7 +108,7 @@ export default function WatchLaterActions({ videos, onChange }: Props) {
       }
 
       const summary = await importRawVideos(details, { complete: false });
-      return `Imported ${summary.added} new videos (${ids.length - newIds.length} already in Chipper). Durations fill in on your next sync.`;
+      return `Imported ${countVideos(summary.added)} (${ids.length - newIds.length} already in Chipper). Durations fill in on your next sync.`;
     });
   }
 
@@ -124,7 +135,7 @@ export default function WatchLaterActions({ videos, onChange }: Props) {
         disabled={!!busy || chipList.length === 0}
         onClick={clearChipList}
       >
-        Remove {chipList.length} chipped from YouTube
+        Remove {countVideos(chipList.length)} chipped from YouTube
       </button>
       <label className="border p-2 rounded cursor-pointer focus-within:outline">
         Import CSV

@@ -8,7 +8,7 @@ const SELECTORS = {
   playlist: "ytd-browse #primary",
   item: "ytd-playlist-video-renderer, yt-lockup-view-model",
   titleLink:
-    "a#video-title, yt-lockup-metadata-view-model a[href*='/watch?v=']",
+    "a#video-title, yt-lockup-metadata-view-model a[href*='/watch?v='], yt-lockup-metadata-view-model a[href*='/shorts/']",
   channelLink: "ytd-channel-name a, a[href^='/@'], a[href^='/channel/']",
   duration: "ytd-thumbnail-overlay-time-status-renderer #text, badge-shape",
   continuation: "ytd-continuation-item-renderer, yt-continuation-item-view-model",
@@ -26,6 +26,10 @@ const SETTLE_MS = 3000;
 const SPINNER_SETTLE_MS = 12000;
 // A quick sync stops after this many videos in a row that Chipper already has
 const QUICK_SYNC_KNOWN_RUN = 5;
+// YouTube's menus can be slow to open, so each removal gets a few tries
+const REMOVE_ATTEMPTS = 3;
+const MENU_TIMEOUT_MS = 5000;
+const BETWEEN_REMOVALS_MS = 500;
 
 let backdrop = null;
 
@@ -82,16 +86,29 @@ async function removeFromWatchLater(videoIds) {
   const failed = [];
 
   for (const id of videoIds) {
-    const el = findItem(id);
-    if (!el) {
+    if (!findItem(id)) {
       notFound.push(id);
       continue;
     }
-    (await removeItem(el)) ? removed.push(id) : failed.push(id);
+    (await removeWithRetries(id)) ? removed.push(id) : failed.push(id);
     updateOverlay(`Removed ${removed.length} of ${videoIds.length}`);
+    await sleep(BETWEEN_REMOVALS_MS);
   }
 
   return { ok: true, removed, notFound, failed };
+}
+
+async function removeWithRetries(videoId) {
+  for (let attempt = 0; attempt < REMOVE_ATTEMPTS; attempt++) {
+    // Look the row up each time, in case YouTube re-rendered it
+    const el = findItem(videoId);
+    if (!el) return true;
+    if (await removeItem(el)) return true;
+    closeMenu();
+    await sleep(1000);
+  }
+  // A removal can land after we stopped waiting for it
+  return !findItem(videoId);
 }
 
 // Scrolls until every video has loaded, or until stopWhen() returns true.
@@ -154,7 +171,7 @@ function readItem(el) {
   const href = link?.getAttribute("href");
   if (!href) return null;
 
-  const videoId = new URL(href, location.origin).searchParams.get("v");
+  const videoId = videoIdFromHref(href);
   if (!videoId) return null;
 
   // Badges also show things like "SHORTS" or "LIVE", so only take a time
@@ -172,6 +189,13 @@ function readItem(el) {
   };
 }
 
+// Shorts link to /shorts/ID rather than /watch?v=ID
+function videoIdFromHref(href) {
+  const url = new URL(href, location.origin);
+  const shorts = url.pathname.match(/^\/shorts\/([\w-]{11})/);
+  return shorts ? shorts[1] : url.searchParams.get("v");
+}
+
 function findItem(videoId) {
   return [...playlistRoot().querySelectorAll(SELECTORS.item)].find(
     (el) => readItem(el)?.videoId === videoId,
@@ -180,24 +204,37 @@ function findItem(videoId) {
 
 async function removeItem(el) {
   el.scrollIntoView({ block: "center" });
-  el.querySelector(SELECTORS.menuButton)?.click();
+  // Give YouTube a moment to finish rendering the row after scrolling
+  await sleep(300);
 
-  const option = await waitFor(() =>
-    [...document.querySelectorAll(SELECTORS.menuItem)].find(
-      (item) =>
-        item.getBoundingClientRect().height > 0 &&
-        SELECTORS.removeMenuText.test(item.textContent),
-    ),
+  const menuButton = el.querySelector(SELECTORS.menuButton);
+  if (!menuButton) return false;
+  menuButton.click();
+
+  const option = await waitFor(
+    () =>
+      [...document.querySelectorAll(SELECTORS.menuItem)].find(
+        (item) =>
+          item.getBoundingClientRect().height > 0 &&
+          SELECTORS.removeMenuText.test(item.textContent),
+      ),
+    MENU_TIMEOUT_MS,
   );
-  if (!option) {
-    document.body.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
-    );
-    return false;
-  }
+  if (!option) return false;
 
   option.click();
-  return Boolean(await waitFor(() => !el.isConnected || el.offsetParent === null));
+  return Boolean(
+    await waitFor(
+      () => !el.isConnected || el.offsetParent === null,
+      MENU_TIMEOUT_MS,
+    ),
+  );
+}
+
+function closeMenu() {
+  document.body.dispatchEvent(
+    new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+  );
 }
 
 async function waitFor(check, timeoutMs = 3000) {
