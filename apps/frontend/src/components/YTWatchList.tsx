@@ -5,7 +5,8 @@ import type {
   Video,
   YouTubePreferences,
 } from "../types";
-import * as Slider from "@radix-ui/react-slider";
+import DurationRange from "./DurationRange";
+import { inDurationRange } from "../utils/format";
 import VideoList from "./VideoList";
 import ClusteredVideoList from "./ClusterVideoList";
 import VideoPlayer from "./VideoPlayer";
@@ -17,6 +18,8 @@ import {
   savePreferences,
   setVideoStatus,
 } from "../db/queries";
+
+const MAX_VIDEO_MINUTES = 180;
 
 const STATUS_FILTERS: { label: string; statuses: ChipStatus[] }[] = [
   { label: "To watch", statuses: ["queued", "in_progress"] },
@@ -100,8 +103,7 @@ export default function YTWatchList() {
       statusFilter.includes(v.status) &&
       (v.title.toLowerCase().includes(query) ||
         v.channel.toLowerCase().includes(query)) &&
-      mins >= durationRange[0] &&
-      mins <= durationRange[1]
+      inDurationRange(mins, durationRange, MAX_VIDEO_MINUTES)
     );
   });
 
@@ -211,29 +213,13 @@ export default function YTWatchList() {
         })}
       </div>
 
-      {/* Slider Control */}
       {sortBy == "duration" && (
-        <div className="space-y-2">
-          <p className="font-medium">
-            Duration filter: {durationRange[0]}–{durationRange[1]} min
-          </p>
-          <Slider.Root
-            className="relative flex items-center select-none touch-none w-[300px] h-[40px]"
-            value={durationRange}
-            min={0}
-            max={180} // 3h max
-            step={1}
-            onValueChange={(val) =>
-              updatePreferences({ durationRange: val as [number, number] })
-            }
-          >
-            <Slider.Track className="relative h-[6px] grow rounded-full bg-gray-500">
-              <Slider.Range className="absolute h-full rounded-full bg-white" />
-            </Slider.Track>
-            <Slider.Thumb className="block w-[20px] h-[20px] bg-black border border-gray-400 rounded-full shadow" />
-            <Slider.Thumb className="block w-[20px] h-[20px] bg-black border border-gray-400 rounded-full shadow" />
-          </Slider.Root>
-        </div>
+        <DurationRange
+          label="Duration filter"
+          value={durationRange}
+          max={MAX_VIDEO_MINUTES}
+          onChange={(range) => updatePreferences({ durationRange: range })}
+        />
       )}
 
       <div className="font-semibold">Total Watch Time: {formattedTotal}</div>

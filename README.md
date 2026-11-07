@@ -67,7 +67,7 @@ You'll need Node.js and Chrome (or another Chromium browser).
 - [x] Sort by release date, artist or name; filter by decade
 - [x] Listening (headphones), love (heart) and an "up next" pin
 - [x] A genre filter that also shows which albums have no genre
-- [x] Podcasts (saved episodes)
+- [x] Podcasts (saved episodes), filtered by progress and time left
 - [x] Genres and styles from the Discogs masters data dump, since Spotify's artist genres are deprecated and often empty
 - [x] Add, remove or reassign an album's genres yourself; later imports keep your edits
 

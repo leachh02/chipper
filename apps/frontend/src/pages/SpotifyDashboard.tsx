@@ -27,6 +27,7 @@ import type {
   Album,
   ChipStatus,
   Episode,
+  PodcastPreferences,
   Preferences,
   SpotifyPreferences,
 } from "../types";
@@ -151,6 +152,13 @@ export default function SpotifyDashboard() {
     savePreferences(next);
   }
 
+  function updatePodcastPreferences(changes: Partial<PodcastPreferences>) {
+    if (!preferences) return;
+    const next = { ...preferences, podcasts: { ...preferences.podcasts, ...changes } };
+    setPreferences(next);
+    savePreferences(next);
+  }
+
   async function updateAlbumStatus(id: string, status: ChipStatus) {
     const updated = await setAlbumStatus(id, status);
     if (updated) setAlbums((all) => all.map((a) => (a.id === id ? updated : a)));
@@ -270,7 +278,12 @@ export default function SpotifyDashboard() {
           onGenresChange={updateAlbumGenres}
         />
       ) : (
-        <EpisodesView episodes={episodes} onStatusChange={updateEpisodeStatus} />
+        <EpisodesView
+          episodes={episodes}
+          preferences={preferences.podcasts}
+          onPreferencesChange={updatePodcastPreferences}
+          onStatusChange={updateEpisodeStatus}
+        />
       )}
     </div>
   );

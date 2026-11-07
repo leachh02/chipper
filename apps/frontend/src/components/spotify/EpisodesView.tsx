@@ -1,8 +1,8 @@
-import { useState } from "react";
 import { FaCheck, FaForward, FaHeadphones } from "react-icons/fa";
-import type { ChipStatus, Episode } from "../../types";
+import type { ChipStatus, Episode, PodcastPreferences } from "../../types";
 import ChipActions from "../ChipActions";
-import { formatRuntime } from "../../utils/format";
+import DurationRange from "../DurationRange";
+import { formatRuntime, inDurationRange } from "../../utils/format";
 
 const EPISODE_ACTIONS: Partial<Record<ChipStatus, string>> = {
   in_progress: "Listening",
@@ -16,29 +16,47 @@ const EPISODE_ICONS = {
   skipped: <FaForward />,
 };
 
+const STATUS_FILTERS: { label: string; status: ChipStatus }[] = [
+  { label: "Not started", status: "queued" },
+  { label: "Part listened", status: "in_progress" },
+  { label: "Listened", status: "completed" },
+  { label: "Skipped", status: "skipped" },
+];
+
+const MAX_EPISODE_MINUTES = 240;
+
+function timeLeftMs(episode: Episode) {
+  return Math.max(0, episode.duration_ms - episode.resume_position_ms);
+}
+
 type Props = {
   episodes: Episode[];
+  preferences: PodcastPreferences;
+  onPreferencesChange: (changes: Partial<PodcastPreferences>) => void;
   onStatusChange: (id: string, status: ChipStatus) => void;
 };
 
-export default function EpisodesView({ episodes, onStatusChange }: Props) {
-  const [showDone, setShowDone] = useState(false);
-  const [sortBy, setSortBy] = useState<"added" | "release" | "duration">("added");
+export default function EpisodesView({
+  episodes,
+  preferences,
+  onPreferencesChange,
+  onStatusChange,
+}: Props) {
+  const { sortBy, statusFilter, durationRange } = preferences;
 
   const shown = episodes
     .filter(
-      (e) => showDone || (e.status !== "completed" && e.status !== "skipped"),
+      (e) =>
+        statusFilter.includes(e.status) &&
+        inDurationRange(timeLeftMs(e) / 60000, durationRange, MAX_EPISODE_MINUTES),
     )
     .sort((a, b) => {
-      if (sortBy === "duration") return a.duration_ms - b.duration_ms;
+      if (sortBy === "duration") return timeLeftMs(a) - timeLeftMs(b);
       if (sortBy === "release") return b.release_date.localeCompare(a.release_date);
       return b.added_at.localeCompare(a.added_at);
     });
 
-  const remainingMs = shown.reduce(
-    (sum, e) => sum + Math.max(0, e.duration_ms - e.resume_position_ms),
-    0,
-  );
+  const remainingMs = shown.reduce((sum, e) => sum + timeLeftMs(e), 0);
 
   return (
     <div>
@@ -47,21 +65,38 @@ export default function EpisodesView({ episodes, onStatusChange }: Props) {
           className="border p-2"
           aria-label="Sort episodes by"
           value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+          onChange={(e) =>
+            onPreferencesChange({ sortBy: e.target.value as typeof sortBy })
+          }
         >
           <option value="added">Recently saved</option>
           <option value="release">Newest release</option>
-          <option value="duration">Shortest first</option>
+          <option value="duration">Least time left</option>
         </select>
-        <label className="flex items-center gap-1">
-          <input
-            type="checkbox"
-            checked={showDone}
-            onChange={() => setShowDone(!showDone)}
-          />
-          Show listened and skipped
-        </label>
+        {STATUS_FILTERS.map(({ label, status }) => (
+          <label key={status} className="flex items-center gap-1">
+            <input
+              type="checkbox"
+              checked={statusFilter.includes(status)}
+              onChange={() =>
+                onPreferencesChange({
+                  statusFilter: statusFilter.includes(status)
+                    ? statusFilter.filter((s) => s !== status)
+                    : [...statusFilter, status],
+                })
+              }
+            />
+            {label}
+          </label>
+        ))}
       </div>
+
+      <DurationRange
+        label="Time left"
+        value={durationRange}
+        max={MAX_EPISODE_MINUTES}
+        onChange={(range) => onPreferencesChange({ durationRange: range })}
+      />
 
       <div className="font-semibold my-2">
         {shown.length} {shown.length === 1 ? "episode" : "episodes"} ·{" "}

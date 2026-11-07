@@ -53,12 +53,20 @@ export type SpotifyPreferences = {
   lovedOnly: boolean;
 };
 
+export type PodcastPreferences = {
+  sortBy: "added" | "release" | "duration";
+  statusFilter: ChipStatus[];
+  // Minutes left to listen, so part-listened episodes count what remains
+  durationRange: [number, number];
+};
+
 export type Preferences = {
   id: "singleton";
   maxDailyMinutes: number;
   hideShorts: boolean;
   youtube: YouTubePreferences;
   spotify: SpotifyPreferences;
+  podcasts: PodcastPreferences;
 };
 
 export type Meta = {

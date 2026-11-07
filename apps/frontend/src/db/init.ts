@@ -20,6 +20,11 @@ export const DEFAULT_PREFERENCES: Preferences = {
     upNextOnly: false,
     lovedOnly: false,
   },
+  podcasts: {
+    sortBy: "added",
+    statusFilter: ["queued", "in_progress"],
+    durationRange: [0, 240],
+  },
 };
 
 export async function initializeDefaults() {

@@ -11,3 +11,8 @@ export function formatRuntime(ms: number) {
 export function releaseYear(releaseDate: string) {
   return Number(releaseDate.slice(0, 4)) || null;
 }
+
+// For a DurationRange slider, where the top of the range means "and longer"
+export function inDurationRange(minutes: number, [low, high]: [number, number], max: number) {
+  return minutes >= low && (high >= max || minutes <= high);
+}

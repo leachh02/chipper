@@ -308,6 +308,7 @@ export async function getPreferences(): Promise<Preferences> {
     hideShorts: stored?.hideShorts ?? DEFAULT_PREFERENCES.hideShorts,
     youtube: { ...DEFAULT_PREFERENCES.youtube, ...stored?.youtube },
     spotify: { ...DEFAULT_PREFERENCES.spotify, ...stored?.spotify },
+    podcasts: { ...DEFAULT_PREFERENCES.podcasts, ...stored?.podcasts },
   };
 }
 
