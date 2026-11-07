@@ -6,6 +6,11 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
+    // Spotify only accepts 127.0.0.1 redirect URLs (not localhost), and the
+    // redirect URL's port must match, so don't fall back to another port
+    host: "127.0.0.1",
+    port: 5173,
+    strictPort: true,
     //remove for prod
     proxy: {
       "/api": {

@@ -262,10 +262,13 @@ async function getAllPages<T>(path: string): Promise<T[]> {
 }
 
 export async function getAllSavedAlbums(): Promise<Album[]> {
-  const saved = await getAllPages<SpotifySavedAlbum>("/me/albums?limit=50");
+  // Albums that are no longer available on Spotify come back empty
+  const saved = (await getAllPages<SpotifySavedAlbum | null>("/me/albums?limit=50"))
+    .filter((item): item is SpotifySavedAlbum => !!item?.album?.id);
 
   // The album object only includes its first 50 tracks
   for (const { album } of saved) {
+    album.tracks ??= { items: [], next: null };
     if (album.tracks.next) {
       const rest = await getAllPages<SpotifyTrack>(album.tracks.next);
       album.tracks.items.push(...rest);
@@ -276,7 +279,9 @@ export async function getAllSavedAlbums(): Promise<Album[]> {
 }
 
 export async function getSavedEpisodes(): Promise<Episode[]> {
-  const saved = await getAllPages<SpotifySavedEpisode>("/me/episodes?limit=50");
+  // Episodes that were taken down or aren't available in your country come back empty
+  const saved = (await getAllPages<SpotifySavedEpisode | null>("/me/episodes?limit=50"))
+    .filter((item): item is SpotifySavedEpisode => !!item?.episode?.id);
   return saved.map(simplifyEpisode);
 }
 
@@ -291,9 +296,9 @@ function simplifyAlbum(item: SpotifySavedAlbum): Album {
   return {
     id: item.album.id,
     name: item.album.name,
-    artist: item.album.artists.map((a) => a.name).join(", "),
-    artist_id: item.album.artists.map((a) => a.id).join(", "),
-    release_date: item.album.release_date,
+    artist: (item.album.artists ?? []).map((a) => a.name).join(", "),
+    artist_id: (item.album.artists ?? []).map((a) => a.id).join(", "),
+    release_date: item.album.release_date ?? "",
     genres: [],
     runtime_ms: item.album.tracks.items.reduce(
       (acc, track) => acc + track.duration_ms,
@@ -305,7 +310,7 @@ function simplifyAlbum(item: SpotifySavedAlbum): Album {
     status: "queued",
     completed_at: null,
     rating: null,
-    url: item.album.external_urls.spotify,
+    url: item.album.external_urls?.spotify ?? `https://open.spotify.com/album/${item.album.id}`,
     last_synced: Date.now().toString(),
   };
 }
@@ -317,10 +322,10 @@ function simplifyEpisode({ episode, added_at }: SpotifySavedEpisode): Episode {
     name: episode.name,
     show: episode.show?.name ?? "",
     image: episode.images?.[0]?.url ?? episode.show?.images?.[0]?.url ?? "",
-    release_date: episode.release_date,
-    duration_ms: episode.duration_ms,
+    release_date: episode.release_date ?? "",
+    duration_ms: episode.duration_ms ?? 0,
     resume_position_ms: resume?.resume_position_ms ?? 0,
-    url: episode.external_urls.spotify,
+    url: episode.external_urls?.spotify ?? `https://open.spotify.com/episode/${episode.id}`,
     added_at,
     // Spotify's progress, only shared with the playback position scope
     status: resume?.fully_played

@@ -68,6 +68,7 @@ You'll need Node.js and Chrome (or another Chromium browser).
 - [x] Listening (headphones), love (heart) and an "up next" pin
 - [x] Genre enrichment that records which albums got none, plus a genre filter
 - [x] Podcasts (saved episodes)
+- [ ] Genres from an outside source (Last.fm, Discogs or MusicBrainz), since Spotify's artist genres are deprecated and often empty
 
 ### Phase 4: The depleter
 
@@ -78,6 +79,7 @@ You'll need Node.js and Chrome (or another Chromium browser).
 - [ ] Design pass: clean up components, light and dark mode, getting-started guide on the landing page
 - [ ] Self-host friendly: configurable extension ID and origins, contributor docs, issue templates
 - [ ] Publish the extension (Chrome Web Store, maybe Firefox) and host the site on a domain
+  - [ ] The hosted site is YouTube only: Spotify's Development Mode caps an app at 5 users, so Spotify needs your own client ID in a self-hosted copy
 - [ ] CI for typecheck, lint and build; tests for the import and merge logic
 
 ### Phase 6: Later, optional
