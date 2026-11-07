@@ -79,14 +79,16 @@ You'll need Node.js and Chrome (or another Chromium browser).
 ### Phase 5: Polish and public release
 
 - [ ] Design pass: clean up components, light and dark mode, getting-started guide on the landing page
+  - [ ] Phone-friendly layout, installable as a web app (PWA) on iOS and Android, with storage that isn't cleared
 - [ ] Self-host friendly: configurable extension ID and origins, contributor docs, issue templates
+- [ ] Export and import all your data as a backup file, which is also how a phone and PC stay in step until Phase 6
 - [ ] Publish the extension (Chrome Web Store, maybe Firefox) and host the site on a domain
   - [ ] The hosted site is YouTube only: Spotify's Development Mode caps an app at 5 users, so Spotify needs your own client ID in a self-hosted copy
 - [x] CI for typecheck, lint and build; tests for the import and merge logic
 
 ### Phase 6: Later, optional
 
-- [ ] Self-hosted server with cross-device sync, Docker friendly (Jellyfin is good architectural inspiration)
+- [ ] Self-hosted server with live sync between devices (phone and PC), Docker friendly (Jellyfin is good architectural inspiration)
   - [ ] AI clusters, available in the self-hosted version only, with a user-chosen number of groups
 - [ ] Split the frontend bundle
 
