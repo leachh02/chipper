@@ -285,13 +285,6 @@ export async function getSavedEpisodes(): Promise<Episode[]> {
   return saved.map(simplifyEpisode);
 }
 
-// Spotify has deprecated artist genres, so many come back empty. Batch
-// artist lookups were removed in February 2026, so this is one request each.
-export async function getArtistGenres(artistId: string): Promise<string[]> {
-  const artist = await spotifyGet<{ genres?: string[] }>(`/artists/${artistId}`);
-  return artist.genres ?? [];
-}
-
 function simplifyAlbum(item: SpotifySavedAlbum): Album {
   return {
     id: item.album.id,

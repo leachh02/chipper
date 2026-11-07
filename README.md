@@ -66,9 +66,9 @@ You'll need Node.js and Chrome (or another Chromium browser).
 - [x] Proper album card with runtime, track count and a link to Spotify
 - [x] Sort by release date, artist or name; filter by decade
 - [x] Listening (headphones), love (heart) and an "up next" pin
-- [x] Genre enrichment that records which albums got none, plus a genre filter
+- [x] A genre filter that also shows which albums have no genre
 - [x] Podcasts (saved episodes)
-- [ ] Genres from an outside source (Last.fm, Discogs or MusicBrainz), since Spotify's artist genres are deprecated and often empty
+- [x] Genres and styles from the Discogs masters data dump, since Spotify's artist genres are deprecated and often empty
 
 ### Phase 4: The depleter
 

@@ -154,7 +154,7 @@ export default function AlbumsView({
             </option>
           ))}
           {noGenreCount > 0 && (
-            <option value={NO_GENRE}>No genre on Spotify ({noGenreCount})</option>
+            <option value={NO_GENRE}>No genre found ({noGenreCount})</option>
           )}
         </select>
       </div>

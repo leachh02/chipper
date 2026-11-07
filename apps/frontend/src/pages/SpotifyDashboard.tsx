@@ -6,10 +6,10 @@ import {
   handleSpotifyCallback,
   ensureValidToken,
   getAllSavedAlbums,
-  getArtistGenres,
   getSavedEpisodes,
   loginWithSpotifyClick,
 } from "../utils/spotify";
+import { DISCOGS_DUMPS_URL, matchDiscogsGenres } from "../utils/discogs";
 import {
   getAllAlbums,
   getAllEpisodes,
@@ -58,26 +58,27 @@ export default function SpotifyDashboard() {
     setEpisodes(allEpisodes.filter((e) => !e.removedAt));
   }, []);
 
-  const enrichGenres = useCallback(async () => {
-    const pending = (await getAllAlbums()).filter(
-      (a) => !a.removedAt && !a.genresCheckedAt,
-    );
-    const artistGenres = new Map<string, string[]>();
-
-    for (const [index, album] of pending.entries()) {
-      setStatus(`Looking up genres: ${index + 1} of ${pending.length} albums`);
-      const genres = new Set<string>();
-      for (const artistId of album.artist_id.split(", ").filter(Boolean)) {
-        if (!artistGenres.has(artistId)) {
-          artistGenres.set(artistId, await getArtistGenres(artistId));
-        }
-        artistGenres.get(artistId)!.forEach((g) => genres.add(g));
-      }
-      await saveAlbumGenres(new Map([[album.id, [...genres]]]));
+  async function importGenres(file: File) {
+    setSyncing(true);
+    setErrors([]);
+    try {
+      const { genresById, checked, matched } = await matchDiscogsGenres(
+        file,
+        albums,
+        (fraction) =>
+          setStatus(`Reading Discogs data: ${Math.round(fraction * 100)}%`),
+      );
+      await saveAlbumGenres(genresById);
+      await reload();
+      setStatus(
+        `Found genres for ${matched} of ${count(checked, "album")} on Discogs.`,
+      );
+    } catch (err) {
+      setStatus("");
+      setErrors([`Couldn't import genres: ${String((err as Error).message ?? err)}`]);
     }
-
-    if (pending.length) await reload();
-  }, [reload]);
+    setSyncing(false);
+  }
 
   const sync = useCallback(async () => {
     setSyncing(true);
@@ -110,19 +111,10 @@ export default function SpotifyDashboard() {
     await reload();
     setErrors(failures);
 
-    if (albumResult.status === "fulfilled") {
-      try {
-        await enrichGenres();
-      } catch (err) {
-        failures.push(`Couldn't look up genres: ${String((err as Error).message ?? err)}`);
-        setErrors([...failures]);
-      }
-    }
-
     if (messages.length) setStatus(`Synced: ${messages.join(", ")}.`);
     else setStatus(failures.length ? "" : "Synced: you're up to date.");
     setSyncing(false);
-  }, [reload, enrichGenres]);
+  }, [reload]);
 
   useEffect(() => {
     if (started.current) return;
@@ -175,6 +167,7 @@ export default function SpotifyDashboard() {
   if (loading || !preferences) return <div className="p-6">Loading...</div>;
 
   const hasData = albums.length > 0 || episodes.length > 0;
+  const uncheckedAlbums = albums.filter((a) => !a.genresCheckedAt).length;
 
   return (
     <div className="p-6">
@@ -214,6 +207,25 @@ export default function SpotifyDashboard() {
             </button>
           </>
         )}
+        {tab === "albums" && albums.length > 0 && (
+          <label
+            className={`border p-2 rounded text-sm cursor-pointer ${syncing ? "opacity-50 pointer-events-none" : ""}`}
+            title="Match your albums against a Discogs masters data dump (discogs_…_masters.xml.gz)"
+          >
+            Import genres from Discogs
+            <input
+              type="file"
+              accept=".gz,.xml"
+              className="sr-only"
+              disabled={syncing}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (file) importGenres(file);
+              }}
+            />
+          </label>
+        )}
         {status && (
           <span className="text-sm" role="status">
             {status}
@@ -224,11 +236,22 @@ export default function SpotifyDashboard() {
       {errors.map((error) => (
         <p key={error} role="alert" className="text-sm text-red-600 my-1">
           {/[.!?]$/.test(error) ? error : `${error}.`}
-          {hasData && " Showing your last saved copy."}
+          {hasData && error.startsWith("Couldn't refresh") && " Showing your last saved copy."}
         </p>
       ))}
 
       {!isAuthenticated && <ConnectButton />}
+
+      {tab === "albums" && uncheckedAlbums > 0 && (
+        <p className="text-sm text-gray-500 my-1">
+          {count(uncheckedAlbums, "album")} {uncheckedAlbums === 1 ? "has" : "have"} no
+          genres yet. Download the latest masters file from{" "}
+          <a href={DISCOGS_DUMPS_URL} target="_blank" rel="noreferrer" className="underline">
+            Discogs data dumps
+          </a>{" "}
+          and use Import genres from Discogs.
+        </p>
+      )}
 
       {tab === "albums" ? (
         <AlbumsView
