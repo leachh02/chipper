@@ -12,7 +12,7 @@ type Props = {
 
 export default function ChipActions({ status, labels, icons, onChange }: Props) {
   return (
-    <div className="flex flex-wrap gap-1 mt-1">
+    <div className="flex flex-wrap gap-1">
       {(Object.entries(labels) as [ChipStatus, string][]).map(
         ([target, label]) => {
           const active = status === target;
@@ -47,10 +47,10 @@ export function ToggleButton({ active, label, icon, onClick }: ToggleButtonProps
       aria-pressed={active}
       aria-label={icon ? label : undefined}
       title={icon ? label : undefined}
-      className={`text-xs px-2 py-0.5 rounded border ${
+      className={`inline-flex h-7 min-w-7 items-center justify-center rounded-md border px-2 text-xs font-medium transition-colors ${
         active
-          ? "bg-gray-800 text-white border-gray-800 dark:bg-white dark:text-black dark:border-white"
-          : "border-gray-400 text-gray-600 hover:border-current dark:text-gray-300"
+          ? "border-accent bg-accent text-on-accent"
+          : "border-line bg-surface text-muted hover:text-fg hover:bg-surface-2"
       }`}
       onClick={onClick}
     >

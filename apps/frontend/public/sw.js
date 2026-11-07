@@ -1,0 +1,38 @@
+// Lets Chipper open without a connection. Everything is fetched from the
+// network first, so updates show up straight away, and the last copy is
+// used when offline. Your backlog itself lives in IndexedDB, not here.
+const CACHE = "chipper-v1";
+
+self.addEventListener("install", () => self.skipWaiting());
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim()),
+  );
+});
+
+self.addEventListener("fetch", (event) => {
+  const request = event.request;
+  const url = new URL(request.url);
+  // Only this site's own files; YouTube, Spotify and thumbnails go straight through
+  if (request.method !== "GET" || url.origin !== self.location.origin) return;
+
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
+        if (response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE).then((cache) => cache.put(request, copy));
+        }
+        return response;
+      })
+      .catch(async () => {
+        const cached = await caches.match(request);
+        // Any page of the app is index.html
+        return cached ?? (request.mode === "navigate" ? caches.match("/") : Response.error());
+      }),
+  );
+});

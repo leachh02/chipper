@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Link } from "react-router-dom";
 import { FaCheck, FaForward, FaPodcast, FaRecordVinyl, FaYoutube } from "react-icons/fa";
 import ChipActions from "../components/ChipActions";
 import { SPOTIFY } from "../config";
@@ -15,6 +14,7 @@ import {
 } from "../db/queries";
 import type { ChipStatus, ItemType, Preferences, QueuePreferences } from "../types";
 import { formatRuntime } from "../utils/format";
+import { setFlag } from "../utils/flags";
 import {
   albumItems,
   buildQueue,
@@ -76,6 +76,8 @@ export default function QueuePage() {
 
   useEffect(() => {
     load();
+    // Ticks off the last step of the setup guide on the home page
+    setFlag("sessionTried");
   }, []);
 
   const settings = useMemo(
@@ -98,7 +100,7 @@ export default function QueuePage() {
     [pool, settings],
   );
 
-  if (!preferences || !settings) return <div className="p-6">Loading...</div>;
+  if (!preferences || !settings) return <div className="page">Loading...</div>;
 
   function update(changes: Partial<QueuePreferences>) {
     const next = { ...preferences!, queue: { ...settings!, ...changes } };
@@ -120,79 +122,80 @@ export default function QueuePage() {
     .reduce((sum, item) => sum + item.minutes, 0);
   const available = pool.filter((item) => settings.sources.includes(item.type)).length;
 
+  const progress = plannedMinutes ? clearedMinutes / plannedMinutes : 0;
+
   return (
-    <div className="p-6 max-w-3xl">
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-bold">Chip session</h1>
-        <Link to="/" className="text-sm underline">
-          Home
-        </Link>
-      </div>
+    <div className="page max-w-3xl">
+      <h1 className="page-title">Chip session</h1>
 
-      <h2 className="font-semibold mt-4 mb-2">How long have you got?</h2>
-      <div className="flex flex-wrap items-center gap-2">
-        {QUICK_MINUTES.map((m) => (
-          <button
-            key={m}
-            type="button"
-            aria-pressed={settings.minutes === m}
-            className={`border rounded px-3 py-1 text-sm ${
-              settings.minutes === m
-                ? "bg-gray-800 text-white border-gray-800 dark:bg-white dark:text-black dark:border-white"
-                : "border-gray-400"
-            }`}
-            onClick={() => update({ minutes: m })}
-          >
-            {minutes(m)}
-          </button>
-        ))}
-        <label className="flex items-center gap-1 text-sm">
-          or
-          <input
-            type="number"
-            min={1}
-            max={1440}
-            aria-label="Minutes"
-            className="border p-1 w-20"
-            value={settings.minutes}
-            onChange={(e) => {
-              const value = Math.round(Number(e.target.value));
-              if (value > 0) update({ minutes: Math.min(value, 1440) });
-            }}
-          />
-          min
-        </label>
-      </div>
-
-      <div className="flex flex-wrap gap-3 my-3 text-sm">
-        {SOURCES.map(({ type, label, icon }) => (
-          <label key={type} className="flex items-center gap-1">
+      <section className="card mt-4 p-4 sm:p-5">
+        <h2 className="section-title">How long have you got?</h2>
+        <div className="flex flex-wrap items-center gap-2">
+          {QUICK_MINUTES.map((m) => (
+            <button
+              key={m}
+              type="button"
+              aria-pressed={settings.minutes === m}
+              className={`btn min-w-14 ${settings.minutes === m ? "btn-primary" : ""}`}
+              onClick={() => update({ minutes: m })}
+            >
+              {minutes(m)}
+            </button>
+          ))}
+          <label className="flex items-center gap-2 text-sm text-muted">
+            or
             <input
-              type="checkbox"
-              checked={settings.sources.includes(type)}
-              onChange={() =>
-                update({
-                  sources: settings.sources.includes(type)
-                    ? settings.sources.filter((s) => s !== type)
-                    : [...settings.sources, type],
-                })
-              }
+              type="number"
+              min={1}
+              max={1440}
+              aria-label="Minutes"
+              className="input w-20"
+              value={settings.minutes}
+              onChange={(e) => {
+                const value = Math.round(Number(e.target.value));
+                if (value > 0) update({ minutes: Math.min(value, 1440) });
+              }}
             />
-            {icon}
-            {label}
+            min
           </label>
-        ))}
-      </div>
+        </div>
 
-      <div className="flex flex-wrap items-center gap-3 my-3">
-        <div className="font-semibold">
-          {queue.length} {queue.length === 1 ? "item" : "items"} · {minutes(plannedMinutes)} of{" "}
-          {minutes(settings.minutes)}
-          {clearedMinutes > 0 && ` · ${minutes(clearedMinutes)} cleared`}
+        {SOURCES.length > 1 && (
+          <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+            {SOURCES.map(({ type, label, icon }) => (
+              <label key={type} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={settings.sources.includes(type)}
+                  onChange={() =>
+                    update({
+                      sources: settings.sources.includes(type)
+                        ? settings.sources.filter((s) => s !== type)
+                        : [...settings.sources, type],
+                    })
+                  }
+                />
+                <span className="text-muted">{icon}</span>
+                {label}
+              </label>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <div className="mt-6 mb-3 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <div className="text-lg font-semibold">
+            {queue.length} {queue.length === 1 ? "item" : "items"} · {minutes(plannedMinutes)}
+            <span className="font-normal text-muted"> of {minutes(settings.minutes)}</span>
+          </div>
+          {clearedMinutes > 0 && (
+            <div className="text-sm text-accent">{minutes(clearedMinutes)} cleared</div>
+          )}
         </div>
         <button
           type="button"
-          className="border rounded px-2 py-1 text-sm"
+          className="btn"
           title="Rebuild the queue without what you've finished or skipped"
           onClick={load}
         >
@@ -200,8 +203,17 @@ export default function QueuePage() {
         </button>
       </div>
 
+      {queue.length > 0 && (
+        <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-surface-2">
+          <div
+            className="h-full rounded-full bg-accent transition-all"
+            style={{ width: `${progress * 100}%` }}
+          />
+        </div>
+      )}
+
       {queue.length === 0 && (
-        <p className="text-sm text-gray-500">
+        <p className="card p-6 text-center text-sm text-muted">
           {available === 0
             ? `Nothing waiting in your backlog for these services. Sync ${SPOTIFY.enabled ? "Watch Later or Spotify" : "Watch Later"} first.`
             : `Nothing fits in ${minutes(settings.minutes)}. Try more time or another service.`}
@@ -216,7 +228,7 @@ export default function QueuePage() {
           return (
             <li
               key={item.key}
-              className={`flex items-center gap-3 border border-gray-300 dark:border-gray-700 rounded p-2 ${
+              className={`card flex items-center gap-3 p-2 pr-3 transition-opacity ${
                 finished ? "opacity-50" : ""
               }`}
             >
@@ -225,30 +237,34 @@ export default function QueuePage() {
                   src={item.image}
                   alt=""
                   loading="lazy"
-                  className={`${item.type === "video" ? "w-24 aspect-video" : "w-14 aspect-square"} object-cover rounded shrink-0`}
+                  className={`${item.type === "video" ? "w-24 aspect-video" : "w-14 aspect-square"} object-cover rounded-lg shrink-0`}
                 />
               ) : (
-                <div className="w-14 aspect-square rounded bg-gray-200 dark:bg-gray-800 shrink-0" />
+                <div className="w-14 aspect-square rounded-lg bg-surface-2 shrink-0" />
               )}
               <div className="min-w-0 flex-1">
                 <a
                   href={item.url}
                   target="_blank"
                   rel="noreferrer"
-                  className={`font-semibold leading-tight line-clamp-2 hover:underline ${
+                  className={`font-medium leading-snug line-clamp-2 hover:underline ${
                     status === "completed" ? "line-through" : ""
                   }`}
                 >
                   {item.title}
                 </a>
-                <div className="flex items-center gap-1 text-sm text-gray-500 min-w-0">
-                  <span className="shrink-0">{SOURCES.find((s) => s.type === item.type)?.icon}</span>
+                <div className="flex items-center gap-1.5 text-sm text-muted min-w-0">
+                  <span className="shrink-0">{ALL_SOURCES.find((s) => s.type === item.type)?.icon}</span>
                   <span className="truncate">{item.subtitle}</span>
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="flex items-center gap-2 text-xs text-muted">
                   {minutes(item.minutes)}
                   {item.type === "episode" && item.status === "in_progress" && " left"}
-                  {badge && ` · ${badge}`}
+                  {badge && (
+                    <span className="rounded bg-surface-2 px-1.5 py-0.5 font-medium text-fg">
+                      {badge}
+                    </span>
+                  )}
                 </div>
               </div>
               <ChipActions

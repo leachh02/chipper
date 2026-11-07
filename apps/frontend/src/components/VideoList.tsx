@@ -20,46 +20,58 @@ export default function VideoList({
   onSelect,
   onStatusChange,
 }: Props) {
+  if (videos.length === 0) {
+    return (
+      <p className="card p-6 text-center text-sm text-muted">
+        No videos match. Sync Watch Later, or change the filters.
+      </p>
+    );
+  }
+
   return (
-    <div>
-      <div className="grid grid-cols-5 sm:grid-cols-2 md:grid-cols-5 lg:grid-cols-7 gap-3">
-        {videos.map((v) => (
-          <div
-            key={v.id}
-            className={`flex flex-col ${
-              v.status === "completed" || v.status === "skipped"
-                ? "opacity-40"
-                : ""
-            }`}
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))] gap-3 sm:grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] sm:gap-4">
+      {videos.map((v) => (
+        <div
+          key={v.id}
+          className={`card flex flex-col overflow-hidden transition-opacity ${
+            v.status === "completed" || v.status === "skipped" ? "opacity-40" : ""
+          }`}
+        >
+          <button
+            type="button"
+            className="relative block"
+            aria-label={`Play ${v.title}`}
+            onClick={() => onSelect(v)}
           >
-            <button
-              type="button"
-              className="p-0 border-0 bg-transparent"
-              aria-label={`Play ${v.title}`}
-              onClick={() => onSelect(v)}
-            >
-              <img
-                src={thumbnailUrl(v.id)}
-                alt=""
-                className="w-full aspect-video object-cover rounded"
-                onError={(e) => {
+            <img
+              src={thumbnailUrl(v.id)}
+              alt=""
+              loading="lazy"
+              className="w-full aspect-video object-cover bg-surface-2"
+              onError={(e) => {
+                e.currentTarget.src = fallbackThumbnail;
+              }}
+              onLoad={(e) => {
+                // YouTube serves a 120px placeholder for missing videos
+                if (e.currentTarget.naturalWidth === 120) {
                   e.currentTarget.src = fallbackThumbnail;
-                }}
-                onLoad={(e) => {
-                  // YouTube serves a 120px placeholder for missing videos
-                  if (e.currentTarget.naturalWidth === 120) {
-                    e.currentTarget.src = fallbackThumbnail;
-                  }
-                }}
-              />
-            </button>
-            <div>
-              <h3 className="text-base font-semibold overflow-hidden text-ellipsis">
+                }
+              }}
+            />
+            {v.duration && (
+              <span className="absolute bottom-1.5 right-1.5 rounded bg-black/75 px-1.5 py-0.5 text-xs font-medium text-white">
+                {v.duration}
+              </span>
+            )}
+          </button>
+          <div className="flex flex-1 flex-col gap-2 p-3">
+            <div className="min-w-0">
+              <h3 className="text-sm font-medium leading-snug line-clamp-2" title={v.title}>
                 {v.title}
               </h3>
-              <p className="text-sm text-gray-600">
-                {v.channel} • {v.duration || "–"}
-              </p>
+              <p className="truncate text-xs text-muted">{v.channel}</p>
+            </div>
+            <div className="mt-auto">
               <ChipActions
                 status={v.status}
                 labels={VIDEO_ACTIONS}
@@ -67,8 +79,8 @@ export default function VideoList({
               />
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
   );
 }

@@ -34,13 +34,13 @@ export default function GenreEditor({ genres, onChange, onDone }: Props) {
         {genres.map((genre) => (
           <li
             key={genre}
-            className="flex items-center gap-1 rounded border border-gray-400 pl-1.5"
+            className="flex items-center gap-1 rounded border border-line pl-1.5"
           >
             {genre}
             <button
               type="button"
               aria-label={`Remove ${genre}`}
-              className="px-1 hover:text-red-600"
+              className="px-1 hover:text-danger"
               onClick={() => onChange(genres.filter((g) => g !== genre))}
             >
               ×
@@ -60,7 +60,7 @@ export default function GenreEditor({ genres, onChange, onDone }: Props) {
           list="album-genres"
           aria-label="Add a genre"
           placeholder="Add a genre"
-          className="border p-1 min-w-0 flex-1"
+          className="input px-2 py-1 text-xs min-w-0 flex-1"
           value={text}
           autoFocus
           onChange={(e) => setText(e.target.value)}
@@ -68,7 +68,7 @@ export default function GenreEditor({ genres, onChange, onDone }: Props) {
         />
         <button
           type="button"
-          className="border rounded px-2"
+          className="btn px-2 py-1 text-xs"
           onClick={() => {
             add();
             onDone();

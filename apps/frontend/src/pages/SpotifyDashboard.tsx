@@ -183,110 +183,108 @@ export default function SpotifyDashboard() {
 
   if (!SPOTIFY.enabled) {
     return (
-      <div className="p-6 max-w-2xl">
-        <h1 className="text-xl font-bold">Spotify isn't set up here</h1>
+      <div className="page max-w-2xl">
+        <h1 className="page-title">Spotify isn't set up here</h1>
         <p className="my-2">
           Spotify limits each app to 5 users, so this copy of Chipper doesn't include it. To
           chip away at your albums and podcasts, run your own copy with your own Spotify client
           ID. The README on{" "}
-          <a href="https://github.com/leachh02/chipper" className="underline">
+          <a href="https://github.com/leachh02/chipper" className="link">
             GitHub
           </a>{" "}
           explains how.
         </p>
-        <Link to="/" className="underline">
+        <Link to="/" className="link">
           Back home
         </Link>
       </div>
     );
   }
 
-  if (loading || !preferences) return <div className="p-6">Loading...</div>;
+  if (loading || !preferences) return <div className="page">Loading...</div>;
 
   const hasData = albums.length > 0 || episodes.length > 0;
   const uncheckedAlbums = albums.filter((a) => !a.genresCheckedAt).length;
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-bold">Chip List: Spotify Albums & Podcasts</h1>
-
-      <div className="flex flex-wrap items-center gap-3 my-2">
-        <div role="tablist" className="flex gap-1">
-          {(["albums", "podcasts"] as const).map((t) => (
-            <button
-              key={t}
-              role="tab"
-              aria-selected={tab === t}
-              className={`px-3 py-1 rounded border ${
-                tab === t ? "border-current font-semibold" : "border-transparent"
-              }`}
-              onClick={() => setTab(t)}
+    <div className="page">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 className="page-title">Spotify</h1>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {status && (
+            <span className="basis-full text-right text-sm text-muted" role="status">
+              {status}
+            </span>
+          )}
+          {isAuthenticated ? (
+            <>
+              <button className="btn btn-primary" disabled={syncing} onClick={sync}>
+                Sync now
+              </button>
+              <button
+                className="btn"
+                title="Sign in again, for example after adding new permissions"
+                onClick={loginWithSpotifyClick}
+              >
+                Reconnect
+              </button>
+            </>
+          ) : (
+            <ConnectButton />
+          )}
+          {tab === "albums" && albums.length > 0 && (
+            <label
+              className={`btn ${syncing ? "opacity-50 pointer-events-none" : ""}`}
+              title="Match your albums against a Discogs masters data dump (discogs_…_masters.xml.gz)"
             >
-              {t === "albums" ? `Albums (${albums.length})` : `Podcasts (${episodes.length})`}
-            </button>
-          ))}
+              Import genres
+              <input
+                type="file"
+                accept=".gz,.xml"
+                className="sr-only"
+                disabled={syncing}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (file) importGenres(file);
+                }}
+              />
+            </label>
+          )}
         </div>
-        {isAuthenticated && (
-          <>
-            <button
-              className="border p-2 rounded text-sm"
-              disabled={syncing}
-              onClick={sync}
-            >
-              Sync now
-            </button>
-            <button
-              className="border p-2 rounded text-sm"
-              title="Sign in again, for example after adding new permissions"
-              onClick={loginWithSpotifyClick}
-            >
-              Reconnect Spotify
-            </button>
-          </>
-        )}
-        {tab === "albums" && albums.length > 0 && (
-          <label
-            className={`border p-2 rounded text-sm cursor-pointer ${syncing ? "opacity-50 pointer-events-none" : ""}`}
-            title="Match your albums against a Discogs masters data dump (discogs_…_masters.xml.gz)"
+      </div>
+
+      <div role="tablist" className="mt-4 inline-flex gap-1 rounded-lg bg-surface-2 p-1">
+        {(["albums", "podcasts"] as const).map((t) => (
+          <button
+            key={t}
+            role="tab"
+            aria-selected={tab === t}
+            className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+              tab === t ? "bg-surface text-fg shadow-sm" : "text-muted hover:text-fg"
+            }`}
+            onClick={() => setTab(t)}
           >
-            Import genres from Discogs
-            <input
-              type="file"
-              accept=".gz,.xml"
-              className="sr-only"
-              disabled={syncing}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                e.target.value = "";
-                if (file) importGenres(file);
-              }}
-            />
-          </label>
-        )}
-        {status && (
-          <span className="text-sm" role="status">
-            {status}
-          </span>
-        )}
+            {t === "albums" ? `Albums (${albums.length})` : `Podcasts (${episodes.length})`}
+          </button>
+        ))}
       </div>
 
       {errors.map((error) => (
-        <p key={error} role="alert" className="text-sm text-red-600 my-1">
+        <p key={error} role="alert" className="text-sm text-danger my-2">
           {/[.!?]$/.test(error) ? error : `${error}.`}
           {hasData && error.startsWith("Couldn't refresh") && " Showing your last saved copy."}
         </p>
       ))}
 
-      {!isAuthenticated && <ConnectButton />}
-
       {tab === "albums" && uncheckedAlbums > 0 && (
-        <p className="text-sm text-gray-500 my-1">
+        <p className="text-sm text-muted my-2">
           {count(uncheckedAlbums, "album")} {uncheckedAlbums === 1 ? "has" : "have"} no
           genres yet. Download the latest masters file from{" "}
-          <a href={DISCOGS_DUMPS_URL} target="_blank" rel="noreferrer" className="underline">
+          <a href={DISCOGS_DUMPS_URL} target="_blank" rel="noreferrer" className="link">
             Discogs data dumps
           </a>{" "}
-          and use Import genres from Discogs.
+          and use Import genres.
         </p>
       )}
 

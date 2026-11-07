@@ -180,6 +180,11 @@ export async function setAlbumGenres(
   return updated;
 }
 
+export async function getAllEvents(): Promise<ChipEvent[]> {
+  const db = await getDB();
+  return db.getAll("events");
+}
+
 export async function getAllEpisodes(): Promise<Episode[]> {
   const db = await getDB();
   return db.getAll("episodes");

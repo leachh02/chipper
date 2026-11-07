@@ -55,7 +55,7 @@ export default function VideoPlayer({
               href={video.url}
               target="_blank"
               rel="noreferrer"
-              className="text-sm underline"
+              className="link text-sm"
             >
               Open on YouTube
             </a>

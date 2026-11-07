@@ -34,6 +34,12 @@ export function syncWatchLater(mode: SyncMode, knownIds: string[]) {
   });
 }
 
+// Whether the extension is installed and can talk to this page
+export async function pingExtension(): Promise<boolean> {
+  const response = await sendToExtension<{ ok: boolean }>({ type: "PING" });
+  return response.ok;
+}
+
 export function removeFromWatchLater(videoIds: string[]) {
   return sendToExtension<RemoveResult>({
     type: "REMOVE_FROM_WATCH_LATER",

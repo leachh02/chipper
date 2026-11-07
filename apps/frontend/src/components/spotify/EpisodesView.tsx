@@ -60,9 +60,10 @@ export default function EpisodesView({
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-3 my-2 text-sm">
+      <div className="card my-4 flex flex-col gap-3 p-3 sm:p-4">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
         <select
-          className="border p-2"
+          className="input"
           aria-label="Sort episodes by"
           value={sortBy}
           onChange={(e) =>
@@ -74,7 +75,7 @@ export default function EpisodesView({
           <option value="duration">Least time left</option>
         </select>
         {STATUS_FILTERS.map(({ label, status }) => (
-          <label key={status} className="flex items-center gap-1">
+          <label key={status} className="flex items-center gap-2">
             <input
               type="checkbox"
               checked={statusFilter.includes(status)}
@@ -97,14 +98,15 @@ export default function EpisodesView({
         max={MAX_EPISODE_MINUTES}
         onChange={(range) => onPreferencesChange({ durationRange: range })}
       />
-
-      <div className="font-semibold my-2">
-        {shown.length} {shown.length === 1 ? "episode" : "episodes"} ·{" "}
-        {formatRuntime(remainingMs)} left
       </div>
 
+      <p className="mb-3 text-sm text-muted">
+        {shown.length} {shown.length === 1 ? "episode" : "episodes"} ·{" "}
+        {formatRuntime(remainingMs)} left
+      </p>
+
       {episodes.length === 0 && (
-        <p className="text-sm text-gray-500">
+        <p className="card p-6 text-center text-sm text-muted">
           No saved episodes. Save episodes in Spotify ("Your Episodes") and
           they'll show up here.
         </p>
@@ -118,14 +120,14 @@ export default function EpisodesView({
           return (
             <li
               key={episode.id}
-              className="flex items-center gap-3 border border-gray-300 dark:border-gray-700 rounded p-2"
+              className="card flex items-center gap-3 p-2 pr-3"
             >
               {episode.image && (
                 <img
                   src={episode.image}
                   alt=""
                   loading="lazy"
-                  className="w-16 h-16 object-cover rounded shrink-0"
+                  className="w-16 h-16 object-cover rounded-lg shrink-0"
                 />
               )}
               <div className="min-w-0 flex-1">
@@ -133,20 +135,20 @@ export default function EpisodesView({
                   href={episode.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="font-semibold leading-tight line-clamp-2 hover:underline"
+                  className="font-medium leading-snug line-clamp-2 hover:underline"
                 >
                   {episode.name}
                 </a>
-                <div className="text-sm text-gray-500 truncate">{episode.show}</div>
-                <div className="text-xs text-gray-500">
+                <div className="text-sm text-muted truncate">{episode.show}</div>
+                <div className="text-xs text-muted">
                   {episode.release_date} · {formatRuntime(episode.duration_ms)}
                   {progress > 0 && progress < 1 &&
                     ` · ${formatRuntime(episode.duration_ms - episode.resume_position_ms)} left`}
                 </div>
                 {progress > 0 && (
-                  <div className="h-1 mt-1 rounded bg-gray-200 dark:bg-gray-800">
+                  <div className="h-1 mt-1.5 rounded-full bg-surface-2">
                     <div
-                      className="h-1 rounded bg-current"
+                      className="h-1 rounded-full bg-accent"
                       style={{ width: `${progress * 100}%` }}
                     />
                   </div>

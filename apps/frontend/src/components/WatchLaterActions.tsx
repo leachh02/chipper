@@ -114,9 +114,14 @@ export default function WatchLaterActions({ videos, onChange }: Props) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2 my-2">
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      {(busy || message) && (
+        <span className="basis-full text-right text-sm text-muted" role="status">
+          {busy ?? message}
+        </span>
+      )}
       <button
-        className="border p-2 rounded"
+        className="btn btn-primary"
         disabled={!!busy}
         onClick={() => sync("quick")}
         title="Stops once it reaches videos Chipper already has. Assumes new videos are at the top of Watch Later."
@@ -124,7 +129,7 @@ export default function WatchLaterActions({ videos, onChange }: Props) {
         Quick sync
       </button>
       <button
-        className="border p-2 rounded"
+        className="btn"
         disabled={!!busy}
         onClick={() => sync("full")}
         title="Reads the whole Watch Later playlist and notices videos you've removed on YouTube."
@@ -132,13 +137,13 @@ export default function WatchLaterActions({ videos, onChange }: Props) {
         Full sync
       </button>
       <button
-        className="border p-2 rounded"
+        className="btn"
         disabled={!!busy || chipList.length === 0}
         onClick={clearChipList}
       >
         Remove {countVideos(chipList.length, "chipped")} from YouTube
       </button>
-      <label className="border p-2 rounded cursor-pointer focus-within:outline">
+      <label className="btn focus-within:outline-2 focus-within:outline-accent">
         Import CSV
         <input
           type="file"
@@ -152,11 +157,6 @@ export default function WatchLaterActions({ videos, onChange }: Props) {
           }}
         />
       </label>
-      {(busy || message) && (
-        <span className="text-sm" role="status">
-          {busy ?? message}
-        </span>
-      )}
     </div>
   );
 }

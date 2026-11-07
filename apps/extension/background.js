@@ -3,6 +3,11 @@ const TASKS = ["SYNC_WATCH_LATER", "REMOVE_FROM_WATCH_LATER"];
 
 // Requests from the Chipper web app
 chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {
+  // Lets the app check the extension is installed
+  if (msg?.type === "PING") {
+    sendResponse({ ok: true, version: chrome.runtime.getManifest().version });
+    return;
+  }
   if (!TASKS.includes(msg?.type)) return;
 
   runOnWatchLater(msg, sender.tab?.id)

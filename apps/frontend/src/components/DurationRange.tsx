@@ -26,14 +26,14 @@ export default function DurationRange({ label, value, max, onChange }: Props) {
         minStepsBetweenThumbs={1}
         onValueChange={(v) => onChange(v as [number, number])}
       >
-        <Slider.Track className="relative h-[6px] grow rounded-full bg-gray-300 dark:bg-gray-600">
-          <Slider.Range className="absolute h-full rounded-full bg-gray-800 dark:bg-white" />
+        <Slider.Track className="relative h-[6px] grow rounded-full bg-surface-2">
+          <Slider.Range className="absolute h-full rounded-full bg-accent" />
         </Slider.Track>
         {["Shortest", "Longest"].map((name) => (
           <Slider.Thumb
             key={name}
             aria-label={name}
-            className="block w-[20px] h-[20px] rounded-full border border-gray-400 bg-white dark:bg-black shadow"
+            className="block w-[20px] h-[20px] rounded-full border border-line bg-surface shadow"
           />
         ))}
       </Slider.Root>

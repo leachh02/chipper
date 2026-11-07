@@ -93,16 +93,18 @@ export default function AlbumsView({
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-2 my-2">
+      <div className="card my-4 flex flex-col gap-3 p-3 sm:p-4">
+      <div className="flex flex-wrap gap-2">
         <input
-          type="text"
-          className="border p-2"
-          placeholder="Search by album or artist..."
+          type="search"
+          className="input min-w-0 flex-1 basis-48"
+          aria-label="Search"
+          placeholder="Search by album or artist"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
         <select
-          className="border p-2"
+          className="input"
           aria-label="Sort by"
           value={sortBy}
           onChange={(e) =>
@@ -116,7 +118,7 @@ export default function AlbumsView({
           ))}
         </select>
         <select
-          className="border p-2"
+          className="input"
           aria-label="Sort order"
           value={sortOrder}
           onChange={(e) =>
@@ -127,7 +129,7 @@ export default function AlbumsView({
           <option value="desc">Descending</option>
         </select>
         <select
-          className="border p-2"
+          className="input"
           aria-label="Decade"
           value={decade ?? ""}
           onChange={(e) =>
@@ -144,7 +146,7 @@ export default function AlbumsView({
           ))}
         </select>
         <select
-          className="border p-2 max-w-48"
+          className="input max-w-48"
           aria-label="Genre"
           value={genre ?? ""}
           onChange={(e) => onPreferencesChange({ genre: e.target.value || null })}
@@ -161,9 +163,9 @@ export default function AlbumsView({
         </select>
       </div>
 
-      <div className="flex flex-wrap gap-3 my-2 text-sm">
+      <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
         {STATUS_FILTERS.map(({ label, status }) => (
-          <label key={status} className="flex items-center gap-1">
+          <label key={status} className="flex items-center gap-2">
             <input
               type="checkbox"
               checked={statusFilter.includes(status)}
@@ -178,7 +180,7 @@ export default function AlbumsView({
             {label}
           </label>
         ))}
-        <label className="flex items-center gap-1">
+        <label className="flex items-center gap-2">
           <input
             type="checkbox"
             checked={upNextOnly}
@@ -186,7 +188,7 @@ export default function AlbumsView({
           />
           Shortlist only
         </label>
-        <label className="flex items-center gap-1">
+        <label className="flex items-center gap-2">
           <input
             type="checkbox"
             checked={lovedOnly}
@@ -196,10 +198,12 @@ export default function AlbumsView({
         </label>
       </div>
 
-      <div className="font-semibold my-2">
+      </div>
+
+      <p className="mb-3 text-sm text-muted">
         {sorted.length} {sorted.length === 1 ? "album" : "albums"} ·{" "}
         {formatRuntime(totalMs)} of listening
-      </div>
+      </p>
 
       <datalist id="album-genres">
         {genres.map(([g]) => (
@@ -207,7 +211,7 @@ export default function AlbumsView({
         ))}
       </datalist>
 
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))] gap-3 sm:grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] sm:gap-4">
         {sorted.map((album) => (
           <AlbumCard
             key={album.id}

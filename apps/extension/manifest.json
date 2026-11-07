@@ -1,7 +1,7 @@
 {
   "name": "Chipper",
   "description": "Syncs your YouTube Watch Later playlist with Chipper",
-  "version": "1.1",
+  "version": "1.2",
   "manifest_version": 3,
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqcsjjHiwYqoeOQpBfcQ6dzhHtCS6A6ynsOhu76UbdYywo2OyeG/bKwRKsYY5oCuoo+/U4Ow+lhPCa46Juug6P7LWzIuE1tSsIBkbdf/q0SUP4CotrLjn1TZQIEH1reBLbtZRCp3YUl/HP5RI0TNhRFmXA+csVUmgdaGuA41xMXWT6Zj19F8PuPKPNhQ3zLfl6SJ2mPlWSb0AnlOB4pcWJmZ6/IH1Wbo9Rn10fBX4bGdGsfC0y2xRx0OSFQ0MnawBHgg2kS7vWxlO+b2Ff6eUduqFh12G92X3PVztWMXDo2PiJisLQAE6ctUrsq+JXWNyG7UtEs3ZNeJLXxjPCauiqwIDAQAB",
   "icons": {

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import {
   backupFileName,
   createBackup,
@@ -95,13 +94,8 @@ export default function DataPage() {
   }
 
   return (
-    <div className="p-6 max-w-2xl">
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-bold">Your data</h1>
-        <Link to="/" className="text-sm underline">
-          Home
-        </Link>
-      </div>
+    <div className="page max-w-2xl">
+      <h1 className="page-title">Your data</h1>
 
       <p className="my-2">
         Chipper keeps everything in this browser, on this device
@@ -111,18 +105,18 @@ export default function DataPage() {
       </p>
 
       <section className="my-6">
-        <h2 className="font-semibold mb-2">Save a backup</h2>
-        <button type="button" className="border rounded px-3 py-1" onClick={exportData}>
+        <h2 className="section-title">Save a backup</h2>
+        <button type="button" className="btn" onClick={exportData}>
           Download backup
         </button>
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-sm text-muted mt-1">
           Includes your videos, albums, podcasts, history and settings, but not your Spotify
           sign-in.
         </p>
       </section>
 
       <section className="my-6">
-        <h2 className="font-semibold mb-2">Load a backup</h2>
+        <h2 className="section-title">Load a backup</h2>
         <fieldset className="flex flex-col gap-1 mb-2 text-sm">
           <label className="flex items-start gap-2">
             <input
@@ -150,7 +144,7 @@ export default function DataPage() {
             </span>
           </label>
         </fieldset>
-        <label className="border rounded px-3 py-1 cursor-pointer inline-block">
+        <label className="btn">
           Choose backup file
           <input
             type="file"
@@ -171,25 +165,25 @@ export default function DataPage() {
         </p>
       )}
       {error && (
-        <p role="alert" className="text-sm text-red-600 my-2">
+        <p role="alert" className="text-sm text-danger my-2">
           {error}
         </p>
       )}
 
       {persisted === false && (
         <section className="my-6">
-          <h2 className="font-semibold mb-2">Keep your data</h2>
+          <h2 className="section-title">Keep your data</h2>
           <p className="text-sm mb-2">
             Browsers can clear a site's data when space runs low. You can ask yours to keep
             Chipper's.
           </p>
-          <button type="button" className="border rounded px-3 py-1" onClick={keepData}>
+          <button type="button" className="btn" onClick={keepData}>
             Ask the browser to keep it
           </button>
         </section>
       )}
       {persisted && (
-        <p className="text-sm text-gray-500 my-6">
+        <p className="text-sm text-muted my-6">
           Your browser has agreed to keep Chipper's data.
         </p>
       )}
