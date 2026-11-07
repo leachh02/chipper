@@ -24,7 +24,7 @@ The extension reads your Watch Later playlist from YouTube, because YouTube's AP
 1. Open `chrome://extensions` and turn on **Developer mode**.
 2. Click **Load unpacked** and pick the `apps/extension` folder.
 
-The manifest pins the extension's ID, so it's the same on every machine and Chipper finds it without any setup. Keep YouTube in English: removing videos from Watch Later relies on the wording of YouTube's menu.
+The manifest pins the extension's ID, so it's the same on every machine and Chipper finds it without any setup. If you loaded an older copy before the ID was pinned, click **Remove** on its card and load it again: reloading keeps the old ID. Keep YouTube in English: removing videos from Watch Later relies on the wording of YouTube's menu.
 
 ## 3. Add Spotify (optional)
 
