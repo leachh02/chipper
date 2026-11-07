@@ -75,7 +75,7 @@ export default function AlbumsView({
   });
 
   const sorted = [...filtered].sort((a, b) => {
-    // Up next albums always come first
+    // Shortlisted albums always come first
     if (!!a.upNext !== !!b.upNext) return a.upNext ? -1 : 1;
 
     let cmp = 0;
@@ -184,7 +184,7 @@ export default function AlbumsView({
             checked={upNextOnly}
             onChange={() => onPreferencesChange({ upNextOnly: !upNextOnly })}
           />
-          Up next only
+          Shortlist only
         </label>
         <label className="flex items-center gap-1">
           <input

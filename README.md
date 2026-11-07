@@ -65,7 +65,7 @@ You'll need Node.js and Chrome (or another Chromium browser).
 - [x] Detect added and removed albums; show an error when a fetch fails
 - [x] Proper album card with runtime, track count and a link to Spotify
 - [x] Sort by release date, artist or name; filter by decade
-- [x] Listening (headphones), love (heart) and an "up next" pin
+- [x] Listening (headphones), love (heart) and a shortlist for albums you want to hear soon
 - [x] A genre filter that also shows which albums have no genre
 - [x] Podcasts (saved episodes), filtered by progress and time left
 - [x] Genres and styles from the Discogs masters data dump, since Spotify's artist genres are deprecated and often empty

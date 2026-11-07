@@ -73,7 +73,7 @@ export function getDB() {
         }
 
         // v4 moved albums from "unheard" to the shared "queued" status, and
-        // v5 dropped "deferred" for albums now that "up next" exists
+        // v5 dropped "deferred" for albums now that the shortlist exists
         if (oldVersion > 0 && oldVersion < 5) {
           let cursor = await transaction.objectStore("albums").openCursor();
           while (cursor) {

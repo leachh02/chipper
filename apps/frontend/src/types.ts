@@ -105,6 +105,7 @@ export type Album = {
   completed_at: string | null;
   rating: number | null;
   // Keen to listen to this soon
+  // Shown as "Shortlist"; the stored name predates it
   upNext?: boolean;
   loved?: boolean;
 

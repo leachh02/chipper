@@ -100,7 +100,7 @@ export default function AlbumCard({
         <div className="flex gap-1">
           <ToggleButton
             active={!!album.upNext}
-            label="Up next"
+            label="Shortlist"
             icon={<MdQueueMusic />}
             onClick={() => onFlagsChange(album.id, { upNext: !album.upNext })}
           />
