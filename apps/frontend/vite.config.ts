@@ -8,6 +8,15 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   test: {
     setupFiles: ["src/test/setup.ts"],
+    // Ignore your .env, so tests run the same here as in CI
+    env: {
+      VITE_EXTENSIONS_ID: "",
+      VITE_SPOTIFY_CLIENT_ID: "",
+      VITE_SPOTIFY_REDIRECT_URL: "",
+      VITE_SPOTIFY_SCOPE: "",
+      VITE_SPOTIFY_AUTHORIZATION_ENDPOINT: "",
+      VITE_SPOTIFY_TOKEN_ENDPOINT: "",
+    },
   },
   // npm run preview, for running a production build on your own computer
   preview: {

@@ -20,7 +20,10 @@ export const SPOTIFY = {
   enabled: !!spotifyClientId,
   clientId: spotifyClientId,
   // Add this to the redirect URIs of your app on the Spotify dashboard
-  redirectUrl: env.VITE_SPOTIFY_REDIRECT_URL || `${window.location.origin}/dashboard/spotify`,
+  // (Tests run outside a browser, where there's no window)
+  redirectUrl:
+    env.VITE_SPOTIFY_REDIRECT_URL ||
+    `${typeof window === "undefined" ? "" : window.location.origin}/dashboard/spotify`,
   authorizationEndpoint:
     env.VITE_SPOTIFY_AUTHORIZATION_ENDPOINT || "https://accounts.spotify.com/authorize",
   tokenEndpoint: env.VITE_SPOTIFY_TOKEN_ENDPOINT || "https://accounts.spotify.com/api/token",
