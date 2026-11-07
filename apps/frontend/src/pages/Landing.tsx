@@ -1,4 +1,4 @@
-import { FaYoutube, FaSpotify } from "react-icons/fa";
+import { FaYoutube, FaSpotify, FaHourglassHalf } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 export default function Landing() {
@@ -8,6 +8,13 @@ export default function Landing() {
       <p className="text-lg text-gray-600 mb-6">
         Chip away at your entertainment backlog
       </p>
+      <Link
+        to="/queue"
+        className="flex items-center gap-2 mb-4 px-5 py-2 rounded border-2 border-current font-semibold hover:opacity-80"
+      >
+        <FaHourglassHalf />
+        Start a chip session
+      </Link>
       <div className="flex gap-4">
         <Link
           to="/dashboard/youtube"

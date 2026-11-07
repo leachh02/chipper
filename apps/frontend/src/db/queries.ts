@@ -309,6 +309,7 @@ export async function getPreferences(): Promise<Preferences> {
     youtube: { ...DEFAULT_PREFERENCES.youtube, ...stored?.youtube },
     spotify: { ...DEFAULT_PREFERENCES.spotify, ...stored?.spotify },
     podcasts: { ...DEFAULT_PREFERENCES.podcasts, ...stored?.podcasts },
+    queue: { ...DEFAULT_PREFERENCES.queue, ...stored?.queue },
   };
 }
 

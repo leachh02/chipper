@@ -25,6 +25,10 @@ export const DEFAULT_PREFERENCES: Preferences = {
     statusFilter: ["queued", "in_progress"],
     durationRange: [0, 240],
   },
+  queue: {
+    minutes: 30,
+    sources: ["video", "album", "episode"],
+  },
 };
 
 export async function initializeDefaults() {

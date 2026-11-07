@@ -60,6 +60,12 @@ export type PodcastPreferences = {
   durationRange: [number, number];
 };
 
+export type QueuePreferences = {
+  // How long the last session was, in minutes
+  minutes: number;
+  sources: ItemType[];
+};
+
 export type Preferences = {
   id: "singleton";
   maxDailyMinutes: number;
@@ -67,6 +73,7 @@ export type Preferences = {
   youtube: YouTubePreferences;
   spotify: SpotifyPreferences;
   podcasts: PodcastPreferences;
+  queue: QueuePreferences;
 };
 
 export type Meta = {

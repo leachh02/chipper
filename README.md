@@ -9,7 +9,8 @@ Chipper is free and open source, and always will be. It runs in your browser and
 ## What it does
 
 - **YouTube Watch Later**: syncs your Watch Later playlist through the Chipper browser extension (or imports it from a CSV), then lets you search, sort and filter it by duration and status, see your remaining watch time and play videos in place. Mark videos as watched, skipped or for later, then have the extension remove the ones you're done with from YouTube.
-- **Spotify albums and podcasts**: connects to your Spotify account and pulls in your saved albums and saved podcast episodes. Mark albums as listening, listened or skipped, pin the ones you want to hear next, and heart your favourites. Sort and filter by release date, decade, genre and more. Chipper never removes anything from your Spotify library.
+- **Spotify albums and podcasts**: connects to your Spotify account and pulls in your saved albums and saved podcast episodes. Mark albums as listening, listened or skipped, shortlist the ones you want to hear soon, and heart your favourites. Sort and filter by release date, decade, genre (from Discogs, or your own) and more. Chipper never removes anything from your Spotify library.
+- **Chip sessions**: say how long you've got and which services to include, and Chipper builds one queue to fit: things you've started first, then your shortlist, then the shortest items.
 
 ## Getting started
 
@@ -73,7 +74,7 @@ You'll need Node.js and Chrome (or another Chromium browser).
 
 ### Phase 4: The depleter
 
-- [ ] A queue across services with a time budget ("I have 40 minutes, what should I clear?")
+- [x] A queue across services with a time budget ("I have 40 minutes, what should I clear?"): started items first, then the shortlist, then the shortest, skipping anything that won't fit
 
 ### Phase 5: Polish and public release
 

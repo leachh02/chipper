@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Landing from "./pages/Landing";
 import YTDashboard from "./pages/YTDashboard";
 import SpotifyDashboard from "./pages/SpotifyDashboard";
+import QueuePage from "./pages/QueuePage";
 
 function App() {
   return (
@@ -10,6 +11,7 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/dashboard/youtube" element={<YTDashboard />} />
         <Route path="/dashboard/spotify" element={<SpotifyDashboard />} />
+        <Route path="/queue" element={<QueuePage />} />
       </Routes>
     </Router>
   );
