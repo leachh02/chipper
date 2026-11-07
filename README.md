@@ -82,7 +82,7 @@ You'll need Node.js and Chrome (or another Chromium browser).
 - [ ] Self-host friendly: configurable extension ID and origins, contributor docs, issue templates
 - [ ] Publish the extension (Chrome Web Store, maybe Firefox) and host the site on a domain
   - [ ] The hosted site is YouTube only: Spotify's Development Mode caps an app at 5 users, so Spotify needs your own client ID in a self-hosted copy
-- [ ] CI for typecheck, lint and build; tests for the import and merge logic
+- [x] CI for typecheck, lint and build; tests for the import and merge logic
 
 ### Phase 6: Later, optional
 

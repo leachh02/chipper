@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -5,6 +6,9 @@ import tailwindcss from "@tailwindcss/vite";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  test: {
+    setupFiles: ["src/test/setup.ts"],
+  },
   server: {
     // Spotify only accepts 127.0.0.1 redirect URLs (not localhost), and the
     // redirect URL's port must match, so don't fall back to another port
