@@ -115,6 +115,7 @@ export async function importAlbums(albums: Album[]): Promise<ImportSummary> {
       loved: existing?.loved,
       genres: existing?.genres.length ? existing.genres : album.genres,
       genresCheckedAt: existing?.genresCheckedAt,
+      genresEdited: existing?.genresEdited,
       removedAt: undefined,
     });
   }
@@ -143,19 +144,37 @@ export async function setAlbumFlags(
   return updated;
 }
 
+// Saves imported genres, except on albums whose genres the user has
+// edited. Returns how many of those were kept.
 export async function saveAlbumGenres(genresById: Map<string, string[]>) {
   const db = await getDB();
   const tx = db.transaction("albums", "readwrite");
   const now = Date.now();
+  let kept = 0;
 
   for (const [id, genres] of genresById) {
     const album = await tx.objectStore("albums").get(id);
-    if (album) {
+    if (album?.genresEdited) kept++;
+    else if (album) {
       await tx.objectStore("albums").put({ ...album, genres, genresCheckedAt: now });
     }
   }
 
   await tx.done;
+  return kept;
+}
+
+export async function setAlbumGenres(
+  id: string,
+  genres: string[],
+): Promise<Album | undefined> {
+  const db = await getDB();
+  const album = await db.get("albums", id);
+  if (!album) return;
+
+  const updated = { ...album, genres, genresEdited: true, genresCheckedAt: Date.now() };
+  await db.put("albums", updated);
+  return updated;
 }
 
 export async function getAllEpisodes(): Promise<Episode[]> {

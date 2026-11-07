@@ -38,7 +38,7 @@ export type YouTubePreferences = {
   statusFilter: ChipStatus[];
 };
 
-// Marks albums whose artists have no genres on Spotify
+// Marks albums with no genres from Discogs
 export const NO_GENRE = "__none__";
 
 export type SpotifyPreferences = {
@@ -89,6 +89,8 @@ export type Album = {
   genres: string[];
   // Set once genres have been looked up, even if none were found
   genresCheckedAt?: number;
+  // Set when the user has edited the genres, so imports leave them alone
+  genresEdited?: boolean;
 
   // personal layer
   status: ChipStatus;

@@ -25,6 +25,7 @@ type Props = {
   onPreferencesChange: (changes: Partial<SpotifyPreferences>) => void;
   onStatusChange: (id: string, status: ChipStatus) => void;
   onFlagsChange: (id: string, flags: Pick<Album, "upNext" | "loved">) => void;
+  onGenresChange: (id: string, genres: string[]) => void;
 };
 
 export default function AlbumsView({
@@ -33,6 +34,7 @@ export default function AlbumsView({
   onPreferencesChange,
   onStatusChange,
   onFlagsChange,
+  onGenresChange,
 }: Props) {
   const [search, setSearch] = useState("");
   const { sortBy, sortOrder, decade, genre, statusFilter, upNextOnly, lovedOnly } =
@@ -199,6 +201,12 @@ export default function AlbumsView({
         {formatRuntime(totalMs)} of listening
       </div>
 
+      <datalist id="album-genres">
+        {genres.map(([g]) => (
+          <option key={g} value={g} />
+        ))}
+      </datalist>
+
       <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3">
         {sorted.map((album) => (
           <AlbumCard
@@ -206,6 +214,7 @@ export default function AlbumsView({
             album={album}
             onStatusChange={onStatusChange}
             onFlagsChange={onFlagsChange}
+            onGenresChange={onGenresChange}
           />
         ))}
       </div>

@@ -1,8 +1,9 @@
-import type { ReactNode } from "react";
-import { FaCheck, FaForward, FaHeadphones, FaHeart, FaRegHeart } from "react-icons/fa";
+import { useState, type ReactNode } from "react";
+import { FaCheck, FaForward, FaHeadphones, FaHeart, FaRegHeart, FaTag } from "react-icons/fa";
 import { MdQueueMusic } from "react-icons/md";
 import type { Album, ChipStatus } from "../../types";
 import ChipActions, { ToggleButton } from "../ChipActions";
+import GenreEditor from "./GenreEditor";
 import { formatRuntime, releaseYear } from "../../utils/format";
 
 const ALBUM_ACTIONS: Partial<Record<ChipStatus, string>> = {
@@ -21,9 +22,16 @@ type Props = {
   album: Album;
   onStatusChange: (id: string, status: ChipStatus) => void;
   onFlagsChange: (id: string, flags: Pick<Album, "upNext" | "loved">) => void;
+  onGenresChange: (id: string, genres: string[]) => void;
 };
 
-export default function AlbumCard({ album, onStatusChange, onFlagsChange }: Props) {
+export default function AlbumCard({
+  album,
+  onStatusChange,
+  onFlagsChange,
+  onGenresChange,
+}: Props) {
+  const [editingGenres, setEditingGenres] = useState(false);
   const details = [
     releaseYear(album.release_date),
     `${album.total_tracks} ${album.total_tracks === 1 ? "track" : "tracks"}`,
@@ -57,10 +65,28 @@ export default function AlbumCard({ album, onStatusChange, onFlagsChange }: Prop
           {album.artist}
         </div>
         <div className="text-xs text-gray-500">{details.join(" · ")}</div>
-        {album.genres.length > 0 && (
-          <div className="text-xs text-gray-500 truncate" title={album.genres.join(", ")}>
-            {album.genres.slice(0, 2).join(", ")}
+        {editingGenres ? (
+          <div className="mt-1">
+            <GenreEditor
+              genres={album.genres}
+              onChange={(genres) => onGenresChange(album.id, genres)}
+              onDone={() => setEditingGenres(false)}
+            />
           </div>
+        ) : (
+          <button
+            type="button"
+            className="flex items-center gap-1 max-w-full text-xs text-gray-500 hover:text-current"
+            title={
+              album.genres.length ? `${album.genres.join(", ")} (click to edit)` : "Add genres"
+            }
+            onClick={() => setEditingGenres(true)}
+          >
+            <FaTag className="shrink-0" />
+            <span className="truncate">
+              {album.genres.length ? album.genres.slice(0, 2).join(", ") : "Add genres"}
+            </span>
+          </button>
         )}
       </div>
 

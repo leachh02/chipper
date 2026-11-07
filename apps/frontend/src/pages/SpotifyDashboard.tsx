@@ -19,6 +19,7 @@ import {
   saveAlbumGenres,
   savePreferences,
   setAlbumFlags,
+  setAlbumGenres,
   setAlbumStatus,
   setEpisodeStatus,
 } from "../db/queries";
@@ -68,10 +69,11 @@ export default function SpotifyDashboard() {
         (fraction) =>
           setStatus(`Reading Discogs data: ${Math.round(fraction * 100)}%`),
       );
-      await saveAlbumGenres(genresById);
+      const kept = await saveAlbumGenres(genresById);
       await reload();
       setStatus(
-        `Found genres for ${matched} of ${count(checked, "album")} on Discogs.`,
+        `Found genres for ${matched} of ${count(checked, "album")} on Discogs.` +
+          (kept ? ` Kept your own genres on ${count(kept, "album")}.` : ""),
       );
     } catch (err) {
       setStatus("");
@@ -156,6 +158,11 @@ export default function SpotifyDashboard() {
 
   async function updateAlbumFlags(id: string, flags: Pick<Album, "upNext" | "loved">) {
     const updated = await setAlbumFlags(id, flags);
+    if (updated) setAlbums((all) => all.map((a) => (a.id === id ? updated : a)));
+  }
+
+  async function updateAlbumGenres(id: string, genres: string[]) {
+    const updated = await setAlbumGenres(id, genres);
     if (updated) setAlbums((all) => all.map((a) => (a.id === id ? updated : a)));
   }
 
@@ -260,6 +267,7 @@ export default function SpotifyDashboard() {
           onPreferencesChange={updatePreferences}
           onStatusChange={updateAlbumStatus}
           onFlagsChange={updateAlbumFlags}
+          onGenresChange={updateAlbumGenres}
         />
       ) : (
         <EpisodesView episodes={episodes} onStatusChange={updateEpisodeStatus} />

@@ -69,6 +69,7 @@ You'll need Node.js and Chrome (or another Chromium browser).
 - [x] A genre filter that also shows which albums have no genre
 - [x] Podcasts (saved episodes)
 - [x] Genres and styles from the Discogs masters data dump, since Spotify's artist genres are deprecated and often empty
+- [x] Add, remove or reassign an album's genres yourself; later imports keep your edits
 
 ### Phase 4: The depleter
 
