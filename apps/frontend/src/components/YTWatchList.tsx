@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type {
   ChipStatus,
   Preferences,
@@ -9,7 +9,8 @@ import * as Slider from "@radix-ui/react-slider";
 import VideoList from "./VideoList";
 import ClusteredVideoList from "./ClusterVideoList";
 import VideoPlayer from "./VideoPlayer";
-import SyncWatchLaterButton from "./SyncWatchLaterButton";
+import WatchLaterActions from "./WatchLaterActions";
+import { durationToSeconds } from "../utils/youtube";
 import {
   getAllVideos,
   getPreferences,
@@ -23,21 +24,6 @@ const STATUS_FILTERS: { label: string; statuses: ChipStatus[] }[] = [
   { label: "Watched", statuses: ["completed"] },
   { label: "Skipped", statuses: ["skipped"] },
 ];
-
-const toSeconds = (d: string) =>
-  d.split(":").reduce((acc, val) => acc * 60 + parseInt(val), 0);
-
-// utils/parseDuration.ts
-function parseDurationToMinutes(duration: string): number {
-  const parts = duration.split(":").map(Number).reverse();
-  let totalMinutes = 0;
-
-  if (parts[0]) totalMinutes += parts[0] / 60; // seconds -> minutes
-  if (parts[1]) totalMinutes += parts[1]; // minutes
-  if (parts[2]) totalMinutes += parts[2] * 60; // hours -> minutes
-
-  return totalMinutes;
-}
 
 async function categorizeVideos(videoData: Video[]) {
   const response = await fetch("/api/categorise", {
@@ -56,20 +42,20 @@ async function categorizeVideos(videoData: Video[]) {
 
 export default function YTWatchList() {
   const [videos, setVideos] = useState<Video[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
   const [preferences, setPreferences] = useState<Preferences | null>(null);
   const [search, setSearch] = useState("");
   const [showAICategories, setShowAICategories] = useState(false);
   const [clusters, setClusters] = useState<{ [label: string]: string[] }>({});
-  const [selectedVideo, setSelectedVideo] = useState<string>("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const reload = useCallback(async () => {
+    setVideos(await getAllVideos());
+  }, []);
+  const closePlayer = useCallback(() => setSelectedId(null), []);
 
   useEffect(() => {
-    async function load() {
-      const allVideos = await getAllVideos();
-      setVideos(allVideos);
-    }
-    load();
-  }, [loading]);
+    reload();
+  }, [reload]);
 
   useEffect(() => {
     getPreferences().then(setPreferences);
@@ -77,8 +63,9 @@ export default function YTWatchList() {
 
   if (!preferences) return null;
 
-  const { sortBy, sortOrder, thumbnailsFirst, durationRange, statusFilter } =
+  const { sortBy, sortOrder, durationRange, statusFilter } =
     preferences.youtube;
+  const selectedVideo = videos.find((v) => v.id === selectedId);
 
   function updatePreferences(changes: Partial<YouTubePreferences>) {
     if (!preferences) return;
@@ -107,8 +94,9 @@ export default function YTWatchList() {
 
   const filtered = videos?.filter((v) => {
     const query = search.toLowerCase();
-    const mins = parseDurationToMinutes(v.duration);
+    const mins = durationToSeconds(v.duration) / 60;
     return (
+      !v.removedAt &&
       statusFilter.includes(v.status) &&
       (v.title.toLowerCase().includes(query) ||
         v.channel.toLowerCase().includes(query)) &&
@@ -118,10 +106,6 @@ export default function YTWatchList() {
   });
 
   const sorted = [...filtered].sort((a, b) => {
-    if (thumbnailsFirst) {
-      if (!!a.thumbnail && !b.thumbnail) return -1; // a first
-      if (!a.thumbnail && !!b.thumbnail) return 1; // b first
-    }
     let cmp = 0;
     if (sortBy === "title")
       cmp = a.title
@@ -132,14 +116,14 @@ export default function YTWatchList() {
         .trim()
         .localeCompare(b.channel.trim(), undefined, { sensitivity: "base" });
     else if (sortBy === "duration")
-      cmp = toSeconds(a.duration) - toSeconds(b.duration);
+      cmp = durationToSeconds(a.duration) - durationToSeconds(b.duration);
 
     return sortOrder === "asc" ? cmp : -cmp;
   });
 
   // Total watch time in seconds
   const totalSeconds = sorted.reduce(
-    (sum, v) => sum + toSeconds(v.duration),
+    (sum, v) => sum + durationToSeconds(v.duration),
     0,
   );
 
@@ -183,15 +167,7 @@ export default function YTWatchList() {
         <option value="asc">Ascending</option>
         <option value="desc">Descending</option>
       </select>
-      <button
-        className="border p-2 rounded"
-        onClick={() => updatePreferences({ thumbnailsFirst: !thumbnailsFirst })}
-      >
-        {thumbnailsFirst
-          ? "Thumbnails Required First"
-          : "Some Thumbnails Missing"}
-      </button>
-      <SyncWatchLaterButton loading={loading} setLoading={setLoading} />
+      <WatchLaterActions videos={videos} onChange={reload} />
       <button
         hidden={true} //TODO: Commented out for the time being - will add back in once AI categorization is properly setup
         onClick={async () => {
@@ -251,18 +227,24 @@ export default function YTWatchList() {
 
       <div className="font-semibold">Total Watch Time: {formattedTotal}</div>
       <div className="font-semibold">Total Video Count: {sorted.length}</div>
-      {selectedVideo != "" && <VideoPlayer url={selectedVideo} />}
+      {selectedVideo && (
+        <VideoPlayer
+          video={selectedVideo}
+          onClose={closePlayer}
+          onStatusChange={updateStatus}
+        />
+      )}
       {showAICategories ? (
         <ClusteredVideoList
           videos={sorted}
           clusters={clusters}
-          setSelectedVideo={setSelectedVideo}
+          onSelect={(v) => setSelectedId(v.id)}
           onStatusChange={updateStatus}
         />
       ) : (
         <VideoList
           videos={sorted}
-          setSelectedVideo={setSelectedVideo}
+          onSelect={(v) => setSelectedId(v.id)}
           onStatusChange={updateStatus}
         />
       )}

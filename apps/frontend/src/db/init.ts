@@ -8,7 +8,6 @@ export const DEFAULT_PREFERENCES: Preferences = {
   youtube: {
     sortBy: "duration",
     sortOrder: "asc",
-    thumbnailsFirst: true,
     durationRange: [0, 120],
     statusFilter: ["queued", "in_progress"],
   },

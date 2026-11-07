@@ -27,30 +27,67 @@ export async function updateMeta(lastImportAt: number) {
   await db.put("meta", { ...meta, lastImportAt } as Meta);
 }
 
-export async function importRawVideos(rawVideos: RawVideo[]) {
+export type ImportSummary = { added: number; removed: number };
+
+// Adds or updates videos from Watch Later. A complete import has seen the
+// whole playlist, so any video it didn't see is marked as removed.
+export async function importRawVideos(
+  rawVideos: RawVideo[],
+  { complete }: { complete: boolean },
+): Promise<ImportSummary> {
   const db = await getDB();
+  const tx = db.transaction("videos", "readwrite");
+  const store = tx.objectStore("videos");
   const now = Date.now();
+  const seen = new Set<string>();
+  const summary: ImportSummary = { added: 0, removed: 0 };
 
   for (const raw of rawVideos) {
     if (!raw.videoId) continue;
+    seen.add(raw.videoId);
 
-    const existing = await db.get("videos", raw.videoId);
+    const existing = await store.get(raw.videoId);
+    if (!existing) summary.added++;
 
-    const video: Video = {
+    await store.put({
       id: raw.videoId,
       title: raw.title,
       channel: raw.channel,
-      duration: raw.duration,
+      duration: raw.duration || existing?.duration || "",
       url: raw.url,
-      thumbnail: raw.thumbnail,
 
       importedAt: existing?.importedAt ?? now,
       lastSeenAt: now,
+      // It's in Watch Later, so it hasn't been removed
+      removedAt: undefined,
       status: existing?.status ?? "queued",
-    };
-
-    await db.put("videos", video);
+    });
   }
+
+  if (complete) {
+    for (const video of await store.getAll()) {
+      if (!seen.has(video.id) && !video.removedAt) {
+        await store.put({ ...video, removedAt: now });
+        summary.removed++;
+      }
+    }
+  }
+
+  await tx.done;
+  return summary;
+}
+
+export async function markRemovedFromWatchLater(ids: string[]) {
+  const db = await getDB();
+  const tx = db.transaction("videos", "readwrite");
+  const now = Date.now();
+
+  for (const id of ids) {
+    const video = await tx.objectStore("videos").get(id);
+    if (video) await tx.objectStore("videos").put({ ...video, removedAt: now });
+  }
+
+  await tx.done;
 }
 
 export async function importAlbums(albums: Album[]): Promise<Album[]> {

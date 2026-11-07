@@ -1,7 +1,7 @@
 {
   "name": "Chipper",
   "description": "Chipper Extension",
-  "version": "1.0",
+  "version": "1.1",
   "manifest_version": 3,
   "icons": {
     "16": "images/axe-icon-16.png",
@@ -9,7 +9,7 @@
     "48": "images/axe-icon-48.png",
     "128": "images/axe-icon-128.png"
   },
-  "permissions": ["tabs", "storage"],
+  "permissions": ["tabs"],
   "host_permissions": ["https://www.youtube.com/*"],
   "background": {
     "service_worker": "background.js",

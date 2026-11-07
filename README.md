@@ -8,7 +8,7 @@ Chipper is free and open source, and always will be. It runs in your browser and
 
 ## What it does
 
-- **YouTube Watch Later**: syncs your Watch Later playlist through the Chipper browser extension, then lets you search, sort and filter it by duration, see your total watch time and play videos in place.
+- **YouTube Watch Later**: syncs your Watch Later playlist through the Chipper browser extension (or imports it from a CSV), then lets you search, sort and filter it by duration and status, see your remaining watch time and play videos in place. Mark videos as watched, skipped or for later, then have the extension remove the ones you're done with from YouTube.
 - **Spotify albums**: connects to your Spotify account, pulls in your saved albums and lets you mark them as completed.
 
 ## Getting started
@@ -52,13 +52,13 @@ You'll need Node.js and Chrome (or another Chromium browser).
 
 ### Phase 2: YouTube Watch Later
 
-- [ ] Make sync robust: centralise selectors, refuse empty syncs, scroll until the count stops changing
-- [ ] Get thumbnails for every video from the video ID
-- [ ] Close the player without opening a new YouTube tab; mark videos watched when they end
-- [ ] Detect videos removed on YouTube using `lastSeenAt`
-- [ ] Delta sync (stop at the first known video), with full sync still available
-- [ ] Chip list, plus removing chipped videos from Watch Later through the extension
-- [ ] Import a Watch Later playlist from CSV
+- [x] Make sync robust: centralise selectors, refuse empty syncs, scroll until the count stops changing
+- [x] Get thumbnails for every video from the video ID
+- [x] Close the player without opening a new YouTube tab; mark videos watched when they end
+- [x] Detect videos removed on YouTube using `lastSeenAt`
+- [x] Delta sync (stop at the first known video), with full sync still available
+- [x] Chip list, plus removing chipped videos from Watch Later through the extension
+- [x] Import a Watch Later playlist from CSV
 
 ### Phase 3: Spotify
 

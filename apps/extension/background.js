@@ -1,41 +1,57 @@
-chrome.runtime.onMessageExternal.addListener(
-  async (msg, chipper_sender, sendResponse) => {
-    if (msg.type !== "START_CHIPPER_SCRIPT") return;
+const WATCH_LATER_URL = "https://www.youtube.com/playlist?list=WL";
+const TASKS = ["SYNC_WATCH_LATER", "REMOVE_FROM_WATCH_LATER"];
 
-    startChipperScript();
+// Requests from the Chipper web app
+chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {
+  if (!TASKS.includes(msg?.type)) return;
 
-    // Process Chipper Script
-    chrome.runtime.onMessage.addListener(
-      async (msg, yt_sender, _sendResponse) => {
-        if (msg.type === "SCRIPT_COMPLETE") {
-          chrome.tabs.remove(yt_sender.tab.id);
-          chrome.tabs.update(chipper_sender.tab.id, { active: true });
-          const data = await chrome.storage.local.get("chipper_result");
-          sendResponse({ data: data });
-        }
-      },
-    );
-    return true;
-  },
-);
+  runOnWatchLater(msg, sender.tab?.id)
+    .then(sendResponse)
+    .catch((err) => sendResponse({ ok: false, error: String(err?.message ?? err) }));
+  return true; // respond asynchronously
+});
 
-async function startChipperScript() {
-  const tab = await chrome.tabs.create({
-    url: "https://www.youtube.com/playlist?list=WL",
-    active: true,
+// Progress pings from the Watch Later page. Receiving them keeps this
+// service worker alive while a long sync runs.
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg?.type === "PROGRESS") return;
+});
+
+async function runOnWatchLater(task, appTabId) {
+  const tab = await chrome.tabs.create({ url: WATCH_LATER_URL, active: true });
+
+  try {
+    await waitForTabLoad(tab.id);
+    return await sendTask(tab.id, task);
+  } finally {
+    chrome.tabs.remove(tab.id).catch(() => {});
+    if (appTabId) chrome.tabs.update(appTabId, { active: true });
+  }
+}
+
+function waitForTabLoad(tabId) {
+  return new Promise((resolve) => {
+    const onUpdated = (updatedTabId, info) => {
+      if (updatedTabId === tabId && info.status === "complete") {
+        chrome.tabs.onUpdated.removeListener(onUpdated);
+        resolve();
+      }
+    };
+    chrome.tabs.onUpdated.addListener(onUpdated);
   });
+}
 
-  if (!tab.id) return;
-  const tabId = tab.id;
-
-  const onUpdated = (updatedTabId, info) => {
-    if (updatedTabId === tabId && info.status === "complete") {
-      chrome.tabs.onUpdated.removeListener(onUpdated);
-      chrome.tabs.sendMessage(tabId, {
-        type: "TAB_READY",
-      });
+// The page script can take a moment to start after the tab loads
+async function sendTask(tabId, task) {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    try {
+      return await chrome.tabs.sendMessage(tabId, { type: "RUN_TASK", task });
+    } catch (err) {
+      if (!String(err?.message).includes("Receiving end does not exist")) {
+        throw err;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
-  };
-
-  chrome.tabs.onUpdated.addListener(onUpdated);
+  }
+  throw new Error("Couldn't reach the Watch Later page");
 }

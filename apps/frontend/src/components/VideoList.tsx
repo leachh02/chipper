@@ -1,10 +1,11 @@
 import type { ChipStatus, Video } from "../types";
 import fallbackThumbnail from "../assets/fallback-thumbnail.png";
 import ChipActions from "./ChipActions";
+import { thumbnailUrl } from "../utils/youtube";
 
 interface Props {
   videos: Video[];
-  setSelectedVideo: (url: string) => void;
+  onSelect: (video: Video) => void;
   onStatusChange: (id: string, status: ChipStatus) => void;
 }
 
@@ -16,7 +17,7 @@ const VIDEO_ACTIONS: Partial<Record<ChipStatus, string>> = {
 
 export default function VideoList({
   videos,
-  setSelectedVideo,
+  onSelect,
   onStatusChange,
 }: Props) {
   return (
@@ -31,20 +32,33 @@ export default function VideoList({
                 : ""
             }`}
           >
-            <a
-              onClick={() => setSelectedVideo(v.url)}
-              href={v.url}
-              target="_blank"
-              rel="noreferrer"
+            <button
+              type="button"
+              className="p-0 border-0 bg-transparent"
+              aria-label={`Play ${v.title}`}
+              onClick={() => onSelect(v)}
             >
-              <img src={v.thumbnail || fallbackThumbnail} />
-            </a>
+              <img
+                src={thumbnailUrl(v.id)}
+                alt=""
+                className="w-full aspect-video object-cover rounded"
+                onError={(e) => {
+                  e.currentTarget.src = fallbackThumbnail;
+                }}
+                onLoad={(e) => {
+                  // YouTube serves a 120px placeholder for missing videos
+                  if (e.currentTarget.naturalWidth === 120) {
+                    e.currentTarget.src = fallbackThumbnail;
+                  }
+                }}
+              />
+            </button>
             <div>
               <h3 className="text-base font-semibold overflow-hidden text-ellipsis">
                 {v.title}
               </h3>
               <p className="text-sm text-gray-600">
-                {v.channel} • {v.duration}
+                {v.channel} • {v.duration || "–"}
               </p>
               <ChipActions
                 status={v.status}

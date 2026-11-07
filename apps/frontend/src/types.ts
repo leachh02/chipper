@@ -14,10 +14,11 @@ export type Video = {
   channel: string;
   duration: string;
   url: string;
-  thumbnail?: string;
 
   importedAt: number;
   lastSeenAt: number;
+  // Set when the video is no longer in Watch Later
+  removedAt?: number;
   status: ChipStatus;
 };
 
@@ -33,7 +34,6 @@ export type ChipEvent = {
 export type YouTubePreferences = {
   sortBy: "title" | "channel" | "duration";
   sortOrder: "asc" | "desc";
-  thumbnailsFirst: boolean;
   durationRange: [number, number];
   statusFilter: ChipStatus[];
 };
@@ -57,8 +57,6 @@ export type RawVideo = {
   channel: string;
   duration: string;
   url: string;
-  thumbnail?: string;
-  addedAt?: number;
 };
 
 export type Album = {

@@ -5,13 +5,13 @@ import VideoList from "./VideoList";
 interface Props {
   videos: Video[];
   clusters: { [label: string]: string[] };
-  setSelectedVideo: (url: string) => void;
+  onSelect: (video: Video) => void;
   onStatusChange: (id: string, status: ChipStatus) => void;
 }
 export default function ClusteredVideoList({
   videos,
   clusters,
-  setSelectedVideo,
+  onSelect,
   onStatusChange,
 }: Props) {
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -38,7 +38,7 @@ export default function ClusteredVideoList({
           {expanded === label && (
             <VideoList
               videos={vids}
-              setSelectedVideo={setSelectedVideo}
+              onSelect={onSelect}
               onStatusChange={onStatusChange}
             />
           )}
