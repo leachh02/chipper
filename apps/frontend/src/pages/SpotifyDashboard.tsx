@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { SPOTIFY } from "../config";
 import ConnectButton from "../components/spotify/ConnectButton";
 import AlbumsView from "../components/spotify/AlbumsView";
 import EpisodesView from "../components/spotify/EpisodesView";
@@ -177,6 +179,26 @@ export default function SpotifyDashboard() {
   async function updateEpisodeStatus(id: string, status: ChipStatus) {
     const updated = await setEpisodeStatus(id, status);
     if (updated) setEpisodes((all) => all.map((e) => (e.id === id ? updated : e)));
+  }
+
+  if (!SPOTIFY.enabled) {
+    return (
+      <div className="p-6 max-w-2xl">
+        <h1 className="text-xl font-bold">Spotify isn't set up here</h1>
+        <p className="my-2">
+          Spotify limits each app to 5 users, so this copy of Chipper doesn't include it. To
+          chip away at your albums and podcasts, run your own copy with your own Spotify client
+          ID. The README on{" "}
+          <a href="https://github.com/leachh02/chipper" className="underline">
+            GitHub
+          </a>{" "}
+          explains how.
+        </p>
+        <Link to="/" className="underline">
+          Back home
+        </Link>
+      </div>
+    );
   }
 
   if (loading || !preferences) return <div className="p-6">Loading...</div>;

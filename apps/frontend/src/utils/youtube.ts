@@ -1,6 +1,5 @@
+import { EXTENSION_IDS } from "../config";
 import type { RawVideo } from "../types";
-
-const EXTENSION_ID = import.meta.env.VITE_EXTENSIONS_ID;
 
 export type SyncMode = "quick" | "full";
 
@@ -42,26 +41,23 @@ export function removeFromWatchLater(videoIds: string[]) {
   });
 }
 
-function sendToExtension<T>(message: object): Promise<T | ExtensionError> {
+function sendToExtensionId<T>(id: string, message: object): Promise<T | undefined> {
   return new Promise((resolve) => {
-    if (!window.chrome?.runtime?.sendMessage) {
-      resolve({ ok: false, error: "The Chipper extension isn't installed" });
-      return;
-    }
-    chrome.runtime.sendMessage(
-      EXTENSION_ID,
-      message,
-      undefined,
-      (response?: T) => {
-        resolve(
-          response ?? {
-            ok: false,
-            error: "The Chipper extension didn't respond",
-          },
-        );
-      },
-    );
+    chrome.runtime.sendMessage(id, message, undefined, (response?: T) => resolve(response));
   });
+}
+
+// Tries each configured extension ID until one answers
+async function sendToExtension<T>(message: object): Promise<T | ExtensionError> {
+  // Chrome only exposes this on pages an installed extension accepts
+  if (!window.chrome?.runtime?.sendMessage) {
+    return { ok: false, error: "The Chipper extension isn't installed" };
+  }
+  for (const id of EXTENSION_IDS) {
+    const response = await sendToExtensionId<T>(id, message);
+    if (response) return response;
+  }
+  return { ok: false, error: "The Chipper extension didn't respond" };
 }
 
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;

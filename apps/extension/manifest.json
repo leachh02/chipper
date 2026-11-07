@@ -1,24 +1,33 @@
 {
   "name": "Chipper",
-  "description": "Chipper Extension",
+  "description": "Syncs your YouTube Watch Later playlist with Chipper",
   "version": "1.1",
   "manifest_version": 3,
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqcsjjHiwYqoeOQpBfcQ6dzhHtCS6A6ynsOhu76UbdYywo2OyeG/bKwRKsYY5oCuoo+/U4Ow+lhPCa46Juug6P7LWzIuE1tSsIBkbdf/q0SUP4CotrLjn1TZQIEH1reBLbtZRCp3YUl/HP5RI0TNhRFmXA+csVUmgdaGuA41xMXWT6Zj19F8PuPKPNhQ3zLfl6SJ2mPlWSb0AnlOB4pcWJmZ6/IH1Wbo9Rn10fBX4bGdGsfC0y2xRx0OSFQ0MnawBHgg2kS7vWxlO+b2Ff6eUduqFh12G92X3PVztWMXDo2PiJisLQAE6ctUrsq+JXWNyG7UtEs3ZNeJLXxjPCauiqwIDAQAB",
   "icons": {
     "16": "images/axe-icon-16.png",
     "32": "images/axe-icon-32.png",
     "48": "images/axe-icon-48.png",
     "128": "images/axe-icon-128.png"
   },
-  "permissions": ["tabs"],
-  "host_permissions": ["https://www.youtube.com/*"],
+  "permissions": [
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://www.youtube.com/*"
+  ],
   "background": {
     "service_worker": "background.js",
     "type": "module"
   },
   "content_scripts": [
     {
-      "matches": ["https://www.youtube.com/playlist?list=WL"],
-      "js": ["scripts/yt-wl-playlist-script.js"]
+      "matches": [
+        "https://www.youtube.com/playlist?list=WL"
+      ],
+      "js": [
+        "scripts/yt-wl-playlist-script.js"
+      ]
     }
   ],
   "action": {
@@ -26,8 +35,8 @@
   },
   "externally_connectable": {
     "matches": [
-      "http://localhost:5173/*",
-      "http://127.0.0.1:5173/*",
+      "http://localhost/*",
+      "http://127.0.0.1/*",
       "https://chipper.app/*"
     ]
   }

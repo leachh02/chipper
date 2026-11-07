@@ -1,0 +1,45 @@
+name: Bug report
+description: Something in Chipper isn't working
+labels: [bug]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part?
+      options:
+        - YouTube Watch Later sync or removal
+        - Watch Later list or player
+        - Spotify albums
+        - Spotify podcasts
+        - Discogs genres
+        - Chip sessions
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead. Paste any red error text exactly.
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where are you running Chipper?
+      options:
+        - The public site
+        - My own copy (npm run dev or preview)
+        - My own copy, hosted elsewhere
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: Chrome 142
+  - type: textarea
+    id: details
+    attributes:
+      label: Anything else?
+      description: For Watch Later problems, roughly how many videos you have and whether YouTube is in English. Console messages from the extension help too (chrome://extensions, then "service worker" on Chipper's card).

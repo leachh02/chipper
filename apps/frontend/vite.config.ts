@@ -9,6 +9,12 @@ export default defineConfig({
   test: {
     setupFiles: ["src/test/setup.ts"],
   },
+  // npm run preview, for running a production build on your own computer
+  preview: {
+    host: "127.0.0.1",
+    port: 4173,
+    strictPort: true,
+  },
   server: {
     // Spotify only accepts 127.0.0.1 redirect URLs (not localhost), and the
     // redirect URL's port must match, so don't fall back to another port

@@ -1,5 +1,6 @@
 import { FaYoutube, FaSpotify, FaHourglassHalf } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { SPOTIFY } from "../config";
 
 export default function Landing() {
   return (
@@ -23,6 +24,7 @@ export default function Landing() {
           <FaYoutube />
           Watch Later
         </Link>
+        {SPOTIFY.enabled && (
         <Link
           to="/dashboard/spotify"
           className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
@@ -30,6 +32,7 @@ export default function Landing() {
           <FaSpotify />
           Podcasts & Albums
         </Link>
+        )}
       </div>
     </div>
   );

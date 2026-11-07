@@ -7,6 +7,7 @@
  * https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow
  */
 
+import { SPOTIFY } from "../config";
 import type { Album, Episode } from "../types";
 
 type TokenResponse = {
@@ -47,13 +48,7 @@ type SpotifySavedEpisode = {
   };
 };
 
-const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
-const redirectUrl = import.meta.env.VITE_SPOTIFY_REDIRECT_URL;
-
-const authorizationEndpoint = import.meta.env
-  .VITE_SPOTIFY_AUTHORIZATION_ENDPOINT;
-const tokenEndpoint = import.meta.env.VITE_SPOTIFY_TOKEN_ENDPOINT;
-const scope = import.meta.env.VITE_SPOTIFY_SCOPE;
+const { clientId, redirectUrl, authorizationEndpoint, tokenEndpoint, scope } = SPOTIFY;
 
 // Data structure that manages the current active token, caching it in localStorage
 const currentToken = {

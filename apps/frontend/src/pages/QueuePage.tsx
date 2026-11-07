@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { FaCheck, FaForward, FaPodcast, FaRecordVinyl, FaYoutube } from "react-icons/fa";
 import ChipActions from "../components/ChipActions";
+import { SPOTIFY } from "../config";
 import {
   getAllAlbums,
   getAllEpisodes,
@@ -25,11 +26,13 @@ import {
 
 const QUICK_MINUTES = [15, 30, 45, 60, 90, 120];
 
-const SOURCES: { type: ItemType; label: string; icon: ReactNode }[] = [
+const ALL_SOURCES: { type: ItemType; label: string; icon: ReactNode }[] = [
   { type: "video", label: "Watch Later", icon: <FaYoutube /> },
   { type: "album", label: "Albums", icon: <FaRecordVinyl /> },
   { type: "episode", label: "Podcasts", icon: <FaPodcast /> },
 ];
+
+const SOURCES = ALL_SOURCES.filter((source) => SPOTIFY.enabled || source.type === "video");
 
 const QUEUE_ACTIONS: Partial<Record<ChipStatus, string>> = {
   completed: "Done",
@@ -75,7 +78,15 @@ export default function QueuePage() {
     load();
   }, []);
 
-  const settings = preferences?.queue;
+  const settings = useMemo(
+    () =>
+      preferences && {
+        ...preferences.queue,
+        // Albums and podcasts only exist where Spotify is set up
+        sources: preferences.queue.sources.filter((s) => SOURCES.some((x) => x.type === s)),
+      },
+    [preferences],
+  );
   const queue = useMemo(
     () =>
       settings
@@ -192,7 +203,7 @@ export default function QueuePage() {
       {queue.length === 0 && (
         <p className="text-sm text-gray-500">
           {available === 0
-            ? "Nothing waiting in your backlog for these services. Sync Watch Later or Spotify first."
+            ? `Nothing waiting in your backlog for these services. Sync ${SPOTIFY.enabled ? "Watch Later or Spotify" : "Watch Later"} first.`
             : `Nothing fits in ${minutes(settings.minutes)}. Try more time or another service.`}
         </p>
       )}

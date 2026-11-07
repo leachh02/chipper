@@ -14,11 +14,10 @@ Chipper is free and open source, and always will be. It runs in your browser and
 
 ## Getting started
 
-You'll need Node.js and Chrome (or another Chromium browser).
+You'll need Node.js 22 or later and Chrome (or another Chromium browser).
 
-1. **Load the extension.** Open `chrome://extensions`, turn on Developer mode, click **Load unpacked** and pick `apps/extension`. Copy the extension ID it shows.
-2. **Configure the frontend.** Copy `apps/frontend/.env.example` to `apps/frontend/.env`, then paste in the extension ID. For Spotify, create an app on the [Spotify developer dashboard](https://developer.spotify.com/dashboard), add `http://127.0.0.1:5173/dashboard/spotify` as a redirect URI and paste in its client ID. Spotify apps start in Development Mode, which needs the app owner to have Spotify Premium and allows up to 5 users.
-3. **Run it.**
+1. **Load the extension.** Open `chrome://extensions`, turn on Developer mode, click **Load unpacked** and pick `apps/extension`.
+2. **Run the app.**
 
    ```bash
    cd apps/frontend
@@ -28,6 +27,8 @@ You'll need Node.js and Chrome (or another Chromium browser).
 
    Then open http://127.0.0.1:5173.
 
+That's enough for YouTube. To add Spotify, or to run Chipper anywhere other than your own computer, see [SELF_HOSTING.md](SELF_HOSTING.md). To help out, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Project layout
 
 | Path | What it is |
@@ -35,6 +36,7 @@ You'll need Node.js and Chrome (or another Chromium browser).
 | `apps/frontend` | The app: React, Vite and Tailwind, storing everything in IndexedDB |
 | `apps/extension` | Chrome extension that reads your Watch Later playlist from YouTube |
 | `apps/ai` | Experimental video clustering service (Python), planned for the self-hosted version |
+| `.github` | CI, plus issue and pull request templates |
 
 ## Roadmap
 
@@ -80,7 +82,7 @@ You'll need Node.js and Chrome (or another Chromium browser).
 
 - [ ] Design pass: clean up components, light and dark mode, getting-started guide on the landing page
   - [ ] Phone-friendly layout, installable as a web app (PWA) on iOS and Android, with storage that isn't cleared
-- [ ] Self-host friendly: configurable extension ID and origins, contributor docs, issue templates
+- [x] Self-host friendly: a pinned extension ID that works on any local port, Spotify optional, self-hosting and contributor docs, issue templates
 - [ ] Export and import all your data as a backup file, which is also how a phone and PC stay in step until Phase 6
 - [ ] Publish the extension (Chrome Web Store, maybe Firefox) and host the site on a domain
   - [ ] The hosted site is YouTube only: Spotify's Development Mode caps an app at 5 users, so Spotify needs your own client ID in a self-hosted copy
