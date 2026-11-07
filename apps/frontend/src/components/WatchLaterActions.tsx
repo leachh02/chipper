@@ -21,9 +21,10 @@ type Props = {
 // oEmbed requests to run at once during a CSV import
 const CSV_CONCURRENCY = 4;
 
-// 1 -> "1 video", 2 -> "2 videos"
-function countVideos(count: number) {
-  return `${count} ${count === 1 ? "video" : "videos"}`;
+// countVideos(1) -> "1 video", countVideos(2, "new") -> "2 new videos"
+function countVideos(count: number, adjective?: string) {
+  const noun = count === 1 ? "video" : "videos";
+  return [count, adjective, noun].filter(Boolean).join(" ");
 }
 
 export default function WatchLaterActions({ videos, onChange }: Props) {
@@ -62,7 +63,7 @@ export default function WatchLaterActions({ videos, onChange }: Props) {
       await updateMeta(Date.now());
 
       const parts = [];
-      if (summary.added) parts.push(`${countVideos(summary.added)} new`);
+      if (summary.added) parts.push(countVideos(summary.added, "new"));
       if (summary.removed) {
         parts.push(`${countVideos(summary.removed)} no longer in Watch Later`);
       }
@@ -135,7 +136,7 @@ export default function WatchLaterActions({ videos, onChange }: Props) {
         disabled={!!busy || chipList.length === 0}
         onClick={clearChipList}
       >
-        Remove {countVideos(chipList.length)} chipped from YouTube
+        Remove {countVideos(chipList.length, "chipped")} from YouTube
       </button>
       <label className="border p-2 rounded cursor-pointer focus-within:outline">
         Import CSV
