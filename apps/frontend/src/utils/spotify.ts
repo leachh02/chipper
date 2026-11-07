@@ -7,15 +7,17 @@
  * https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow
  */
 
-import type { Album } from "../types";
+import type { Album, Episode } from "../types";
 
 type TokenResponse = {
   access_token: string;
-  refresh_token: string;
+  refresh_token?: string;
   expires_in: number;
 };
 
 type SpotifyArtist = { id: string; name: string };
+
+type SpotifyTrack = { duration_ms: number };
 
 type SpotifySavedAlbum = {
   added_at: string;
@@ -26,8 +28,22 @@ type SpotifySavedAlbum = {
     release_date: string;
     total_tracks: number;
     images?: { url: string }[];
-    tracks: { items: { duration_ms: number }[] };
+    tracks: { items: SpotifyTrack[]; next: string | null };
     external_urls: { spotify: string };
+  };
+};
+
+type SpotifySavedEpisode = {
+  added_at: string;
+  episode: {
+    id: string;
+    name: string;
+    release_date: string;
+    duration_ms: number;
+    images?: { url: string }[];
+    external_urls: { spotify: string };
+    show?: { name: string; images?: { url: string }[] };
+    resume_point?: { fully_played: boolean; resume_position_ms: number };
   };
 };
 
@@ -57,7 +73,8 @@ const currentToken = {
   save: function (response: TokenResponse) {
     const { access_token, refresh_token, expires_in } = response;
     localStorage.setItem("access_token", access_token);
-    localStorage.setItem("refresh_token", refresh_token);
+    // Refreshes don't always come with a new refresh token
+    if (refresh_token) localStorage.setItem("refresh_token", refresh_token);
     localStorage.setItem("expires_in", expires_in.toString());
 
     const now = new Date();
@@ -144,7 +161,15 @@ async function redirectToSpotifyAuthorize() {
   window.location.href = authUrl.toString(); // Redirect the user to the authorization server for login
 }
 
-// Soptify API Calls
+async function readTokenResponse(response: Response): Promise<TokenResponse> {
+  const data = await response.json();
+  if (!response.ok || !data.access_token) {
+    throw new Error(data.error_description ?? data.error ?? "Spotify sign-in failed");
+  }
+  return data;
+}
+
+// Spotify API Calls
 async function getToken(code: string) {
   const code_verifier = localStorage.getItem("code_verifier") || "";
 
@@ -162,7 +187,7 @@ async function getToken(code: string) {
     }),
   });
 
-  return await response.json();
+  return await readTokenResponse(response);
 }
 
 async function refreshToken() {
@@ -178,41 +203,88 @@ async function refreshToken() {
     }),
   });
 
-  return await response.json();
+  return await readTokenResponse(response);
 }
 
-export async function getAllSavedAlbums() {
-  const limit = 50;
-  let offset = 0;
-  let total = 1;
-  let allAlbums: Album[] = [];
+const API_URL = "https://api.spotify.com/v1";
+const SIGN_IN_EXPIRED = "Your Spotify sign-in has expired. Use Reconnect Spotify.";
 
-  while (offset < total) {
-    const response = await fetch(
-      `https://api.spotify.com/v1/me/albums?limit=${limit}&offset=${offset}`,
-      {
-        headers: {
-          Authorization: "Bearer " + currentToken.access_token,
-        },
-      },
-    );
+type Page<T> = { items: T[]; next: string | null };
 
-    if (response.status === 401) {
-      // Token expired mid-request
-      const newToken = await refreshToken();
-      currentToken.save(newToken);
+// GET from the Web API. Refreshes an expired token once, waits out rate
+// limits, and turns any other failure into an Error.
+async function spotifyGet<T>(pathOrUrl: string): Promise<T> {
+  const url = pathOrUrl.startsWith("http") ? pathOrUrl : API_URL + pathOrUrl;
+  let refreshed = false;
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const response = await fetch(url, {
+      headers: { Authorization: "Bearer " + currentToken.access_token },
+    });
+
+    if (response.ok) return response.json();
+
+    if (response.status === 401 && !refreshed) {
+      try {
+        currentToken.save(await refreshToken());
+      } catch {
+        throw new Error(SIGN_IN_EXPIRED);
+      }
+      refreshed = true;
       continue;
     }
 
-    const data = await response.json();
+    if (response.status === 429) {
+      const waitSeconds = Number(response.headers.get("Retry-After")) || 2;
+      await new Promise((resolve) => setTimeout(resolve, waitSeconds * 1000));
+      continue;
+    }
 
-    total = data.total;
-    allAlbums = allAlbums.concat((data.items as SpotifySavedAlbum[]).map(simplifyAlbum));
-
-    offset += limit;
+    throw new Error(
+      response.status === 401
+        ? SIGN_IN_EXPIRED
+        : `Spotify returned ${response.status} for ${new URL(url).pathname}.`,
+    );
   }
 
-  return allAlbums;
+  throw new Error("Spotify is rate limiting requests. Try again in a minute.");
+}
+
+async function getAllPages<T>(path: string): Promise<T[]> {
+  const items: T[] = [];
+  let next: string | null = path;
+  while (next) {
+    const page: Page<T> = await spotifyGet<Page<T>>(next);
+    items.push(...page.items);
+    next = page.next;
+  }
+  return items;
+}
+
+export async function getAllSavedAlbums(): Promise<Album[]> {
+  const saved = await getAllPages<SpotifySavedAlbum>("/me/albums?limit=50");
+
+  // The album object only includes its first 50 tracks
+  for (const { album } of saved) {
+    if (album.tracks.next) {
+      const rest = await getAllPages<SpotifyTrack>(album.tracks.next);
+      album.tracks.items.push(...rest);
+    }
+  }
+
+  return saved.map(simplifyAlbum);
+}
+
+export async function getSavedEpisodes(): Promise<Episode[]> {
+  const saved = await getAllPages<SpotifySavedEpisode>("/me/episodes?limit=50");
+  return saved.map(simplifyEpisode);
+}
+
+// Spotify has deprecated artist genres, so many come back empty. Batch
+// artist lookups were removed in February 2026, so this is one request each.
+export async function getArtistGenres(artistId: string): Promise<string[]> {
+  const artist = await spotifyGet<{ genres?: string[] }>(`/artists/${artistId}`);
+  return artist.genres ?? [];
 }
 
 function simplifyAlbum(item: SpotifySavedAlbum): Album {
@@ -235,6 +307,27 @@ function simplifyAlbum(item: SpotifySavedAlbum): Album {
     rating: null,
     url: item.album.external_urls.spotify,
     last_synced: Date.now().toString(),
+  };
+}
+
+function simplifyEpisode({ episode, added_at }: SpotifySavedEpisode): Episode {
+  const resume = episode.resume_point;
+  return {
+    id: episode.id,
+    name: episode.name,
+    show: episode.show?.name ?? "",
+    image: episode.images?.[0]?.url ?? episode.show?.images?.[0]?.url ?? "",
+    release_date: episode.release_date,
+    duration_ms: episode.duration_ms,
+    resume_position_ms: resume?.resume_position_ms ?? 0,
+    url: episode.external_urls.spotify,
+    added_at,
+    // Spotify's progress, only shared with the playback position scope
+    status: resume?.fully_played
+      ? "completed"
+      : resume?.resume_position_ms
+        ? "in_progress"
+        : "queued",
   };
 }
 

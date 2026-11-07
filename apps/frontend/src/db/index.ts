@@ -1,6 +1,13 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import { DB_NAME, DB_VERSION } from "./constants";
-import type { Video, ChipEvent, Preferences, Meta, Album } from "../types";
+import type {
+  Video,
+  ChipEvent,
+  Preferences,
+  Meta,
+  Album,
+  Episode,
+} from "../types";
 
 export interface ChipperDB extends DBSchema {
   videos: {
@@ -10,6 +17,10 @@ export interface ChipperDB extends DBSchema {
   albums: {
     key: string;
     value: Album;
+  };
+  episodes: {
+    key: string;
+    value: Episode;
   };
   events: {
     key: string;
@@ -51,18 +62,23 @@ export function getDB() {
         if (!db.objectStoreNames.contains("albums")) {
           db.createObjectStore("albums", { keyPath: "id" });
         }
+        if (!db.objectStoreNames.contains("episodes")) {
+          db.createObjectStore("episodes", { keyPath: "id" });
+        }
 
-        // v4: videoEvents was replaced by the shared events store, and
-        // albums moved from "unheard" to the shared "queued" status
+        // v4: videoEvents was replaced by the shared events store
         const untypedDB = db as unknown as IDBPDatabase;
         if (untypedDB.objectStoreNames.contains("videoEvents")) {
           untypedDB.deleteObjectStore("videoEvents");
         }
 
-        if (oldVersion > 0 && oldVersion < 4) {
+        // v4 moved albums from "unheard" to the shared "queued" status, and
+        // v5 dropped "deferred" for albums now that "up next" exists
+        if (oldVersion > 0 && oldVersion < 5) {
           let cursor = await transaction.objectStore("albums").openCursor();
           while (cursor) {
-            if ((cursor.value.status as string) === "unheard") {
+            const status = cursor.value.status as string;
+            if (status === "unheard" || status === "deferred") {
               await cursor.update({ ...cursor.value, status: "queued" });
             }
             cursor = await cursor.continue();

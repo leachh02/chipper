@@ -5,6 +5,7 @@ import type {
   Meta,
   RawVideo,
   Album,
+  Episode,
   ChipStatus,
   ChipEvent,
   ItemType,
@@ -90,26 +91,132 @@ export async function markRemovedFromWatchLater(ids: string[]) {
   await tx.done;
 }
 
-export async function importAlbums(albums: Album[]): Promise<Album[]> {
+// Saves the user's full list of saved albums, keeping Chipper's own fields.
+// Albums missing from the list have been removed from the Spotify library.
+export async function importAlbums(albums: Album[]): Promise<ImportSummary> {
   const db = await getDB();
-  const imported: Album[] = [];
+  const tx = db.transaction("albums", "readwrite");
+  const store = tx.objectStore("albums");
+  const now = Date.now();
+  const seen = new Set<string>();
+  const summary: ImportSummary = { added: 0, removed: 0 };
 
   for (const album of albums) {
-    const existing = await db.get("albums", album.id);
+    seen.add(album.id);
+    const existing = await store.get(album.id);
+    if (!existing) summary.added++;
 
-    const merged: Album = {
+    await store.put({
       ...album,
       status: existing?.status ?? album.status,
       completed_at: existing?.completed_at ?? album.completed_at,
       rating: existing?.rating ?? album.rating,
+      upNext: existing?.upNext,
+      loved: existing?.loved,
       genres: existing?.genres.length ? existing.genres : album.genres,
-    };
-
-    await db.put("albums", merged);
-    imported.push(merged);
+      genresCheckedAt: existing?.genresCheckedAt,
+      removedAt: undefined,
+    });
   }
 
-  return imported;
+  for (const album of await store.getAll()) {
+    if (!seen.has(album.id) && !album.removedAt) {
+      await store.put({ ...album, removedAt: now });
+      summary.removed++;
+    }
+  }
+
+  await tx.done;
+  return summary;
+}
+
+export async function setAlbumFlags(
+  id: string,
+  flags: Pick<Album, "upNext" | "loved">,
+): Promise<Album | undefined> {
+  const db = await getDB();
+  const album = await db.get("albums", id);
+  if (!album) return;
+
+  const updated = { ...album, ...flags };
+  await db.put("albums", updated);
+  return updated;
+}
+
+export async function saveAlbumGenres(genresById: Map<string, string[]>) {
+  const db = await getDB();
+  const tx = db.transaction("albums", "readwrite");
+  const now = Date.now();
+
+  for (const [id, genres] of genresById) {
+    const album = await tx.objectStore("albums").get(id);
+    if (album) {
+      await tx.objectStore("albums").put({ ...album, genres, genresCheckedAt: now });
+    }
+  }
+
+  await tx.done;
+}
+
+export async function getAllEpisodes(): Promise<Episode[]> {
+  const db = await getDB();
+  return db.getAll("episodes");
+}
+
+// Like importAlbums, for saved podcast episodes. Spotify's own progress
+// moves an episode forward, but never back past what the user set here.
+export async function importEpisodes(
+  episodes: Episode[],
+): Promise<ImportSummary> {
+  const db = await getDB();
+  const tx = db.transaction("episodes", "readwrite");
+  const store = tx.objectStore("episodes");
+  const now = Date.now();
+  const seen = new Set<string>();
+  const summary: ImportSummary = { added: 0, removed: 0 };
+  const order: ChipStatus[] = ["queued", "in_progress", "completed"];
+
+  for (const episode of episodes) {
+    seen.add(episode.id);
+    const existing = await store.get(episode.id);
+    if (!existing) summary.added++;
+
+    const kept = existing?.status ?? "queued";
+    const status =
+      order.includes(kept) && order.indexOf(episode.status) > order.indexOf(kept)
+        ? episode.status
+        : kept;
+
+    await store.put({ ...episode, status, removedAt: undefined });
+  }
+
+  for (const episode of await store.getAll()) {
+    if (!seen.has(episode.id) && !episode.removedAt) {
+      await store.put({ ...episode, removedAt: now });
+      summary.removed++;
+    }
+  }
+
+  await tx.done;
+  return summary;
+}
+
+export async function setEpisodeStatus(
+  id: string,
+  status: ChipStatus,
+): Promise<Episode | undefined> {
+  const db = await getDB();
+  const tx = db.transaction(["episodes", "events"], "readwrite");
+
+  const episode = await tx.objectStore("episodes").get(id);
+  if (!episode) return;
+
+  episode.status = status;
+  await tx.objectStore("episodes").put(episode);
+  await tx.objectStore("events").add(newEvent("episode", id, status));
+  await tx.done;
+
+  return episode;
 }
 
 export async function getAllAlbums(): Promise<Album[]> {
@@ -181,6 +288,7 @@ export async function getPreferences(): Promise<Preferences> {
       stored?.maxDailyMinutes ?? DEFAULT_PREFERENCES.maxDailyMinutes,
     hideShorts: stored?.hideShorts ?? DEFAULT_PREFERENCES.hideShorts,
     youtube: { ...DEFAULT_PREFERENCES.youtube, ...stored?.youtube },
+    spotify: { ...DEFAULT_PREFERENCES.spotify, ...stored?.spotify },
   };
 }
 

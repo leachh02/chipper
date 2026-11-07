@@ -11,6 +11,15 @@ export const DEFAULT_PREFERENCES: Preferences = {
     durationRange: [0, 120],
     statusFilter: ["queued", "in_progress"],
   },
+  spotify: {
+    sortBy: "added",
+    sortOrder: "desc",
+    decade: null,
+    genre: null,
+    statusFilter: ["queued", "in_progress", "completed", "skipped"],
+    upNextOnly: false,
+    lovedOnly: false,
+  },
 };
 
 export async function initializeDefaults() {

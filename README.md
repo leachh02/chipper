@@ -9,14 +9,14 @@ Chipper is free and open source, and always will be. It runs in your browser and
 ## What it does
 
 - **YouTube Watch Later**: syncs your Watch Later playlist through the Chipper browser extension (or imports it from a CSV), then lets you search, sort and filter it by duration and status, see your remaining watch time and play videos in place. Mark videos as watched, skipped or for later, then have the extension remove the ones you're done with from YouTube.
-- **Spotify albums**: connects to your Spotify account, pulls in your saved albums and lets you mark them as completed.
+- **Spotify albums and podcasts**: connects to your Spotify account and pulls in your saved albums and saved podcast episodes. Mark albums as listening, listened or skipped, pin the ones you want to hear next, and heart your favourites. Sort and filter by release date, decade, genre and more. Chipper never removes anything from your Spotify library.
 
 ## Getting started
 
 You'll need Node.js and Chrome (or another Chromium browser).
 
 1. **Load the extension.** Open `chrome://extensions`, turn on Developer mode, click **Load unpacked** and pick `apps/extension`. Copy the extension ID it shows.
-2. **Configure the frontend.** Copy `apps/frontend/.env.example` to `apps/frontend/.env`, then paste in the extension ID. For Spotify, create an app on the [Spotify developer dashboard](https://developer.spotify.com/dashboard), add `http://127.0.0.1:5173/dashboard/spotify` as a redirect URI and paste in its client ID.
+2. **Configure the frontend.** Copy `apps/frontend/.env.example` to `apps/frontend/.env`, then paste in the extension ID. For Spotify, create an app on the [Spotify developer dashboard](https://developer.spotify.com/dashboard), add `http://127.0.0.1:5173/dashboard/spotify` as a redirect URI and paste in its client ID. Spotify apps start in Development Mode, which needs the app owner to have Spotify Premium and allows up to 5 users.
 3. **Run it.**
 
    ```bash
@@ -62,12 +62,12 @@ You'll need Node.js and Chrome (or another Chromium browser).
 
 ### Phase 3: Spotify
 
-- [ ] Detect added and removed albums; show an error when a fetch fails
-- [ ] Proper album card with runtime, track count and a link to Spotify
-- [ ] Sort by release date, artist or name; filter by decade
-- [ ] To-listen (headphones), love (heart) and listen-later priority
-- [ ] Genre enrichment that records which albums got none, plus a genre filter
-- [ ] Podcasts
+- [x] Detect added and removed albums; show an error when a fetch fails
+- [x] Proper album card with runtime, track count and a link to Spotify
+- [x] Sort by release date, artist or name; filter by decade
+- [x] Listening (headphones), love (heart) and an "up next" pin
+- [x] Genre enrichment that records which albums got none, plus a genre filter
+- [x] Podcasts (saved episodes)
 
 ### Phase 4: The depleter
 
