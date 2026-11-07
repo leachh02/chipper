@@ -71,4 +71,4 @@ Since February 2026, Spotify apps in Development Mode can have at most 5 users, 
 
 ## Your data
 
-Everything lives in your browser's storage for the address you open Chipper on. It doesn't leave your computer, except for requests to YouTube and Spotify. Clearing site data for that address deletes it, so a backup option is on the roadmap.
+Everything lives in your browser's storage for the address you open Chipper on. It doesn't leave your computer, except for requests to YouTube and Spotify. Clearing site data for that address deletes it, so save a backup now and then from **Your data and backups** on the home page.

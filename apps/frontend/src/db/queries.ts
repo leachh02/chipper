@@ -62,6 +62,7 @@ export async function importRawVideos(
       // It's in Watch Later, so it hasn't been removed
       removedAt: undefined,
       status: existing?.status ?? "queued",
+      changedAt: existing?.changedAt,
     });
   }
 
@@ -116,6 +117,7 @@ export async function importAlbums(albums: Album[]): Promise<ImportSummary> {
       genres: existing?.genres.length ? existing.genres : album.genres,
       genresCheckedAt: existing?.genresCheckedAt,
       genresEdited: existing?.genresEdited,
+      changedAt: existing?.changedAt,
       removedAt: undefined,
     });
   }
@@ -139,7 +141,7 @@ export async function setAlbumFlags(
   const album = await db.get("albums", id);
   if (!album) return;
 
-  const updated = { ...album, ...flags };
+  const updated = { ...album, ...flags, changedAt: Date.now() };
   await db.put("albums", updated);
   return updated;
 }
@@ -172,7 +174,8 @@ export async function setAlbumGenres(
   const album = await db.get("albums", id);
   if (!album) return;
 
-  const updated = { ...album, genres, genresEdited: true, genresCheckedAt: Date.now() };
+  const now = Date.now();
+  const updated = { ...album, genres, genresEdited: true, genresCheckedAt: now, changedAt: now };
   await db.put("albums", updated);
   return updated;
 }
@@ -206,7 +209,14 @@ export async function importEpisodes(
         ? episode.status
         : kept;
 
-    await store.put({ ...episode, status, removedAt: undefined });
+    await store.put({
+      ...episode,
+      status,
+      // Spotify moving it forward counts as a change
+      changedAt: status === kept ? existing?.changedAt : now,
+      lastSyncedAt: now,
+      removedAt: undefined,
+    });
   }
 
   for (const episode of await store.getAll()) {
@@ -231,6 +241,7 @@ export async function setEpisodeStatus(
   if (!episode) return;
 
   episode.status = status;
+  episode.changedAt = Date.now();
   await tx.objectStore("episodes").put(episode);
   await tx.objectStore("events").add(newEvent("episode", id, status));
   await tx.done;
@@ -268,6 +279,7 @@ export async function setVideoStatus(
   if (!video) return;
 
   video.status = status;
+  video.changedAt = Date.now();
   await tx.objectStore("videos").put(video);
   await tx.objectStore("events").add(newEvent("video", id, status));
   await tx.done;
@@ -286,6 +298,7 @@ export async function setAlbumStatus(
   if (!album) return;
 
   album.status = status;
+  album.changedAt = Date.now();
   album.completed_at =
     status === "completed" ? new Date().toISOString() : null;
 

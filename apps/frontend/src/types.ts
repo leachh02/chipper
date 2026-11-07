@@ -20,6 +20,9 @@ export type Video = {
   // Set when the video is no longer in Watch Later
   removedAt?: number;
   status: ChipStatus;
+  // When the user last changed their own fields (status, flags, genres),
+  // so merging a backup knows which device's choice is newer
+  changedAt?: number;
 };
 
 // One entry per status change, for history and future stats
@@ -122,6 +125,9 @@ export type Album = {
   url: string;
   // Set when the album is no longer saved in Spotify
   removedAt?: number;
+  // When the user last changed their own fields (status, flags, genres),
+  // so merging a backup knows which device's choice is newer
+  changedAt?: number;
 };
 
 // A podcast episode from the user's saved episodes on Spotify
@@ -139,4 +145,9 @@ export type Episode = {
 
   status: ChipStatus;
   removedAt?: number;
+  // When the user last changed their own fields (status, flags, genres),
+  // so merging a backup knows which device's choice is newer
+  changedAt?: number;
+  // When Spotify last listed it
+  lastSyncedAt?: number;
 };

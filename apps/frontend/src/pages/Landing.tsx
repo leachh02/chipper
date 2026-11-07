@@ -34,6 +34,9 @@ export default function Landing() {
         </Link>
         )}
       </div>
+      <Link to="/data" className="mt-6 text-sm underline text-gray-500">
+        Your data and backups
+      </Link>
     </div>
   );
 }

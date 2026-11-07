@@ -83,7 +83,7 @@ That's enough for YouTube. To add Spotify, or to run Chipper anywhere other than
 - [ ] Design pass: clean up components, light and dark mode, getting-started guide on the landing page
   - [ ] Phone-friendly layout, installable as a web app (PWA) on iOS and Android, with storage that isn't cleared
 - [x] Self-host friendly: a pinned extension ID that works on any local port, Spotify optional, self-hosting and contributor docs, issue templates
-- [ ] Export and import all your data as a backup file, which is also how a phone and PC stay in step until Phase 6
+- [x] Export and import all your data as a backup file (merge or replace), which is also how a phone and PC stay in step until Phase 6
 - [ ] Publish the extension (Chrome Web Store, maybe Firefox) and host the site on a domain
   - [ ] The hosted site is YouTube only: Spotify's Development Mode caps an app at 5 users, so Spotify needs your own client ID in a self-hosted copy
 - [x] CI for typecheck, lint and build; tests for the import and merge logic
