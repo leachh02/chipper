@@ -10,27 +10,64 @@ import type { Album } from "../types";
 
 export const DISCOGS_DUMPS_URL = "https://data.discogs.com/?prefix=data/";
 
-// Words that mark a reissue rather than a different album, as in
-// "Rumours - 2004 Remaster" or "Blue (Deluxe Edition)"
-const EDITION_SUFFIX =
-  /\s+-\s+[^-]*\b(remaster(ed)?|deluxe|edition|version|anniversary|expanded|reissue|mono|stereo|bonus)\b.*$/i;
+const EDITION_WORDS =
+  "remaster(ed)?|deluxe|edition|version|anniversary|expanded|reissue|mono|stereo|bonus|mix";
 
-// Lowercase, no accents, no bracketed extras, "&" as "and", no leading "the",
-// letters and digits only. Discogs's " (2)" artist suffixes go with the brackets.
+// A reissue rather than a different album, as in "Rumours - 2004 Remaster"
+const EDITION_AFTER_DASH = new RegExp(`\\s+-\\s+[^-]*\\b(${EDITION_WORDS})\\b.*$`, "i");
+
+// The same with no dash or brackets, as in "Slowhand 35th Anniversary",
+// "Black Bastards Deluxe Edition", "Another Sunny Day -Remastered-" or "Resolution - EP"
+const EDITION_AT_END =
+  /[\s-]+((\d+(st|nd|rd|th)\s+)?anniversary(\s+edition)?|(deluxe|special|expanded)(\s+(edition|version))?|-?remastered-?|ep)$/i;
+
+function stripBrackets(text: string) {
+  const stripped = text.replace(/\s*[([][^)\]]*[)\]]/g, "").trim();
+  // Keep a title that's entirely in brackets, like "(Pronounced 'Lĕh-'nérd...)"
+  return stripped || text.replace(/[()[\]]/g, "");
+}
+
+// Lowercase, no accents, no bracketed extras or edition words, "&" as "and",
+// "$" as "s", no leading "the", letters and digits only. Discogs's " (2)"
+// artist suffixes go with the brackets.
 export function normalise(text: string): string {
-  return text
-    .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(EDITION_SUFFIX, "")
-    .replace(/\s*[([][^)\]]*[)\]]/g, "")
+  return stripBrackets(text.normalize("NFKD").replace(/[̀-ͯ]/g, ""))
+    .replace(EDITION_AFTER_DASH, "")
+    .replace(EDITION_AT_END, "")
+    .replace(/\bSt\.?$/i, "Street")
     .toLowerCase()
     .replace(/&/g, " and ")
+    .replace(/\$/g, "s")
     .replace(/^the\s+/, "")
     .replace(/[^\p{L}\p{N}]+/gu, "");
 }
 
-function key(artist: string, title: string) {
-  return `${normalise(artist)}|${normalise(title)}`;
+// Ways the same album might be titled: in full, then without a subtitle
+// after ":" or " - " ("Ambient 1: Music For Airports", "Legend - The Best Of..."),
+// then keeping what's in brackets ("Black Panther The Album (Music From...)")
+function titleVariants(title: string): string[] {
+  const full = normalise(title);
+  const short = [title.split(":")[0], title.split(" - ")[0], title.replace(/[()[\]]/g, " ")]
+    .map(normalise)
+    .filter((t) => t && t !== full);
+  return [full, ...new Set(short)];
+}
+
+// Spotify joins several artists with ", ", but some names contain a comma
+// ("Tyler, The Creator"), so keep the whole string as well as each part
+function spotifyArtists(album: Album): string[] {
+  return [...new Set([album.artist, ...album.artist.split(", ")])]
+    .map(normalise)
+    .filter(Boolean);
+}
+
+// The same artist written differently: "Jimi Hendrix" and "The Jimi Hendrix
+// Experience", "Blu, Exile" and "Blu & Exile", "Yusuf / Cat Stevens" and
+// "Cat Stevens". Very short names have to match exactly.
+function sameArtist(a: string, b: string) {
+  if (a === b) return true;
+  const [shorter, longer] = a.length < b.length ? [a, b] : [b, a];
+  return shorter.length >= 4 && longer.includes(shorter);
 }
 
 function decodeEntities(text: string) {
@@ -51,8 +88,8 @@ function allText(xml: string, tag: string): string[] {
 type Master = { artists: string[]; title: string; genres: string[] };
 
 export function parseMaster(xml: string): Master | null {
-  // Videos and tracks have titles of their own, so drop them first
-  const body = xml.replace(/<(videos|images|tracks)>[\s\S]*?<\/\1>/g, "");
+  // Videos, which come last, have titles of their own
+  const body = xml.split("<videos>")[0];
   const artistsXml = body.match(/<artists>([\s\S]*?)<\/artists>/)?.[1] ?? "";
   const title = allText(body.replace(/<artists>[\s\S]*?<\/artists>/, ""), "title")[0];
   if (!title) return null;
@@ -65,12 +102,18 @@ export function parseMaster(xml: string): Master | null {
   };
 }
 
-// Spotify joins several artists with ", ", but some names contain a comma
-// ("Tyler, The Creator"), so try the whole string as well as each part
-function albumKeys(album: Album): string[] {
-  const names = new Set([album.artist, ...album.artist.split(", ")]);
-  return [...names].filter(Boolean).map((name) => key(name, album.name));
+// Discogs titles sometimes start with the artist ("Black Sabbath Vol 4",
+// "Frank Sinatra Sings For Only The Lonely"), so also try them without it
+function masterTitleVariants(master: Master, artists: string[]): string[] {
+  const variants = titleVariants(master.title);
+  for (const artist of artists) {
+    const rest = variants[0].startsWith(artist) ? variants[0].slice(artist.length) : "";
+    if (rest) variants.push(rest);
+  }
+  return variants;
 }
+
+type Candidate = { id: string; artists: string[]; quality: number };
 
 export type GenreMatches = {
   genresById: Map<string, string[]>;
@@ -85,14 +128,29 @@ export async function matchDiscogsGenres(
   albums: Album[],
   onProgress: (fraction: number) => void,
 ): Promise<GenreMatches> {
-  const idsByKey = new Map<string, string[]>();
+  // Every title an album might go by. Matches are ranked, best first: full
+  // title, then a shortened one; within those, the exact artist name, then a
+  // looser one. Only an album's best rank counts, so Queen's "Greatest Hits"
+  // doesn't pick up Queensrÿche's.
+  const byTitle = new Map<string, Candidate[]>();
   for (const album of albums) {
-    for (const k of albumKeys(album)) {
-      idsByKey.set(k, [...(idsByKey.get(k) ?? []), album.id]);
-    }
+    const artists = spotifyArtists(album);
+    titleVariants(album.name).forEach((title, i) => {
+      const candidate = { id: album.id, artists, quality: i === 0 ? 0 : 1 };
+      byTitle.set(title, [...(byTitle.get(title) ?? []), candidate]);
+    });
   }
 
-  const found = new Map<string, Set<string>>();
+  const found = new Map<string, { quality: number; genres: Set<string> }>();
+  function addMatch(id: string, quality: number, genres: string[]) {
+    const current = found.get(id);
+    if (current && current.quality < quality) return;
+    const match =
+      current && current.quality === quality ? current : { quality, genres: new Set<string>() };
+    genres.forEach((g) => match.genres.add(g));
+    found.set(id, match);
+  }
+
   let bytesRead = 0;
   const countBytes = new TransformStream<Uint8Array, Uint8Array>({
     transform(chunk, controller) {
@@ -124,15 +182,23 @@ export async function matchDiscogsGenres(
     for (const xml of masters) {
       sawMaster ||= xml.includes("<master ");
       const master = parseMaster(xml);
-      if (!master || !master.genres.length) continue;
+      // Skip interview discs and the like that share an album's title
+      if (!master || !master.genres.length || master.genres.includes("Non-Music")) continue;
 
-      for (const artist of master.artists) {
-        for (const id of idsByKey.get(key(artist, master.title)) ?? []) {
-          const genres = found.get(id) ?? new Set();
-          master.genres.forEach((g) => genres.add(g));
-          found.set(id, genres);
+      const artists = [master.artists.join(" "), ...master.artists]
+        .map(normalise)
+        .filter(Boolean);
+
+      masterTitleVariants(master, artists).forEach((title, i) => {
+        for (const candidate of byTitle.get(title) ?? []) {
+          const pairs = candidate.artists.flatMap((a) => artists.map((b) => [a, b]));
+          if (!pairs.some(([a, b]) => sameArtist(a, b))) continue;
+
+          const titleRank = Math.max(candidate.quality, i === 0 ? 0 : 1);
+          const artistRank = pairs.some(([a, b]) => a === b) ? 0 : 1;
+          addMatch(candidate.id, titleRank * 2 + artistRank, master.genres);
         }
-      }
+      });
     }
 
     if (bytesRead - lastReport > 1_000_000) {
@@ -149,7 +215,7 @@ export async function matchDiscogsGenres(
 
   const genresById = new Map<string, string[]>();
   for (const album of albums) {
-    genresById.set(album.id, [...(found.get(album.id) ?? [])]);
+    genresById.set(album.id, [...(found.get(album.id)?.genres ?? [])]);
   }
   return { genresById, checked: albums.length, matched: found.size };
 }
