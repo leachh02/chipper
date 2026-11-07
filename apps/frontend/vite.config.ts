@@ -5,6 +5,9 @@ import tailwindcss from "@tailwindcss/vite";
 
 // https://vite.dev/config/
 export default defineConfig({
+  // The public site lives at leachh02.github.io/chipper/, so its build sets
+  // VITE_BASE=/chipper/. Everything else is served from the root.
+  base: process.env.VITE_BASE || "/",
   plugins: [react(), tailwindcss()],
   test: {
     setupFiles: ["src/test/setup.ts"],

@@ -22,7 +22,7 @@ export default function Layout() {
       <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 sm:px-6">
           <NavLink to="/" className="flex items-center gap-2 font-semibold tracking-tight">
-            <img src="/icon.svg" alt="" className="h-7 w-7" />
+            <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" className="h-7 w-7" />
             Chipper
           </NavLink>
           <nav aria-label="Main" className="hidden sm:flex items-center gap-1 text-sm">

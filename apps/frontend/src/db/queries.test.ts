@@ -86,6 +86,13 @@ describe("importRawVideos", () => {
     expect((await q.getAllVideos()).find((v) => v.id === "b")?.removedAt).toBeUndefined();
   });
 
+  it("fills in a missing title or channel", async () => {
+    const q = await load();
+    await q.importRawVideos([{ videoId: "a" } as RawVideo], { complete: false });
+
+    expect((await q.getAllVideos())[0]).toMatchObject({ title: "Untitled video", channel: "" });
+  });
+
   it("keeps a known duration when the new one is missing", async () => {
     const q = await load();
     await q.importRawVideos([raw("a", "4:20")], { complete: false });

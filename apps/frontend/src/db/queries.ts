@@ -52,8 +52,9 @@ export async function importRawVideos(
 
     await store.put({
       id: raw.videoId,
-      title: raw.title,
-      channel: raw.channel,
+      // Never trust the page completely: a missing title shouldn't break the list
+      title: raw.title || existing?.title || "Untitled video",
+      channel: raw.channel || existing?.channel || "",
       duration: raw.duration || existing?.duration || "",
       url: raw.url,
 

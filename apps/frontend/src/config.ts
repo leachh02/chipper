@@ -23,7 +23,7 @@ export const SPOTIFY = {
   // (Tests run outside a browser, where there's no window)
   redirectUrl:
     env.VITE_SPOTIFY_REDIRECT_URL ||
-    `${typeof window === "undefined" ? "" : window.location.origin}/dashboard/spotify`,
+    `${typeof window === "undefined" ? "" : window.location.origin}${import.meta.env.BASE_URL}dashboard/spotify`,
   authorizationEndpoint:
     env.VITE_SPOTIFY_AUTHORIZATION_ENDPOINT || "https://accounts.spotify.com/authorize",
   tokenEndpoint: env.VITE_SPOTIFY_TOKEN_ENDPOINT || "https://accounts.spotify.com/api/token",

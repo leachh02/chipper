@@ -53,17 +53,48 @@ function sendToExtensionId<T>(id: string, message: object): Promise<T | undefine
   });
 }
 
-// Tries each configured extension ID until one answers
+// Firefox doesn't let pages message extensions, so the extension's
+// app-bridge content script relays for us through window messages
+function sendThroughBridge<T>(message: object, timeoutMs?: number): Promise<T | undefined> {
+  return new Promise((resolve) => {
+    const id = crypto.randomUUID();
+    const timer = timeoutMs ? setTimeout(() => finish(undefined), timeoutMs) : undefined;
+
+    function finish(response: T | undefined) {
+      clearTimeout(timer);
+      window.removeEventListener("message", onMessage);
+      resolve(response);
+    }
+    function onMessage(event: MessageEvent) {
+      if (event.source === window && event.data?.source === "chipper-extension" && event.data.id === id) {
+        finish(event.data.response);
+      }
+    }
+
+    window.addEventListener("message", onMessage);
+    window.postMessage({ source: "chipper-app", id, message }, window.location.origin);
+  });
+}
+
+// Tries each configured extension ID directly (Chrome), then the bridge
 async function sendToExtension<T>(message: object): Promise<T | ExtensionError> {
   // Chrome only exposes this on pages an installed extension accepts
-  if (!window.chrome?.runtime?.sendMessage) {
-    return { ok: false, error: "The Chipper extension isn't installed" };
+  if (typeof window.chrome?.runtime?.sendMessage === "function") {
+    for (const id of EXTENSION_IDS) {
+      const response = await sendToExtensionId<T>(id, message);
+      if (response) return response;
+    }
   }
-  for (const id of EXTENSION_IDS) {
-    const response = await sendToExtensionId<T>(id, message);
+
+  // A quick ping first, so a long task never waits on a bridge that isn't there
+  const bridged = await sendThroughBridge<{ ok: boolean }>({ type: "PING" }, 1500);
+  if (bridged?.ok) {
+    const response = await sendThroughBridge<T>(message);
     if (response) return response;
+    return { ok: false, error: "The Chipper extension didn't respond" };
   }
-  return { ok: false, error: "The Chipper extension didn't respond" };
+
+  return { ok: false, error: "The Chipper extension isn't installed" };
 }
 
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;

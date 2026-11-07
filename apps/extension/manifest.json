@@ -28,6 +28,17 @@
       "js": [
         "scripts/yt-wl-playlist-script.js"
       ]
+    },
+    {
+      "matches": [
+        "http://localhost/*",
+        "http://127.0.0.1/*",
+        "https://leachh02.github.io/chipper/*"
+      ],
+      "js": [
+        "scripts/app-bridge.js"
+      ],
+      "run_at": "document_start"
     }
   ],
   "action": {
@@ -37,7 +48,7 @@
     "matches": [
       "http://localhost/*",
       "http://127.0.0.1/*",
-      "https://chipper.app/*"
+      "https://leachh02.github.io/*"
     ]
   }
 }

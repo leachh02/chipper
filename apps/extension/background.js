@@ -1,8 +1,10 @@
 const WATCH_LATER_URL = "https://www.youtube.com/playlist?list=WL";
 const TASKS = ["SYNC_WATCH_LATER", "REMOVE_FROM_WATCH_LATER"];
 
-// Requests from the Chipper web app
-chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {
+// Requests from the Chipper web app. Chrome lets the app message the
+// extension directly; Firefox doesn't, so there they come through the
+// app-bridge content script instead.
+function handleAppRequest(msg, sender, sendResponse) {
   // Lets the app check the extension is installed
   if (msg?.type === "PING") {
     sendResponse({ ok: true, version: chrome.runtime.getManifest().version });
@@ -14,12 +16,15 @@ chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {
     .then(sendResponse)
     .catch((err) => sendResponse({ ok: false, error: String(err?.message ?? err) }));
   return true; // respond asynchronously
-});
+}
 
-// Progress pings from the Watch Later page. Receiving them keeps this
-// service worker alive while a long sync runs.
-chrome.runtime.onMessage.addListener((msg) => {
+chrome.runtime.onMessageExternal?.addListener(handleAppRequest);
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  // Progress pings from the Watch Later page. Receiving them keeps this
+  // service worker alive while a long sync runs.
   if (msg?.type === "PROGRESS") return;
+  return handleAppRequest(msg, sender, sendResponse);
 });
 
 async function runOnWatchLater(task, appTabId) {

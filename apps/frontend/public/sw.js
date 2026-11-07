@@ -31,8 +31,11 @@ self.addEventListener("fetch", (event) => {
       })
       .catch(async () => {
         const cached = await caches.match(request);
-        // Any page of the app is index.html
-        return cached ?? (request.mode === "navigate" ? caches.match("/") : Response.error());
+        // Any page of the app is index.html, cached as the app's root
+        return (
+          cached ??
+          (request.mode === "navigate" ? caches.match(self.registration.scope) : Response.error())
+        );
       }),
   );
 });

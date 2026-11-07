@@ -13,7 +13,7 @@ if (import.meta.env.DEV && window.location.hostname === "localhost") {
 // Offline support for the installed app. Skipped in development, where it
 // would serve stale files.
 if (import.meta.env.PROD && "serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/sw.js").catch(() => {});
+  navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => {});
 }
 
 // Once installed to the home screen, ask the browser not to clear Chipper's data

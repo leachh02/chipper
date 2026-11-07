@@ -62,7 +62,7 @@ Use `127.0.0.1` rather than `localhost`. Spotify only accepts `127.0.0.1` for lo
 The `dist` folder that `npm run build` creates is plain static files, so any static host works, such as nginx, Caddy, GitHub Pages or Cloudflare Pages. A few things to know:
 
 - **Send every page to `index.html`.** Chipper handles its own routes, so a request for `/dashboard/youtube` has to return `index.html`. With nginx that's `try_files $uri /index.html;`, and Caddy's equivalent is `try_files {path} /index.html`.
-- **Let the extension talk to your address.** Chrome only lets sites listed in the extension's manifest talk to it, and the manifest allows `localhost`, `127.0.0.1` and the public site. Add your address to `externally_connectable.matches` in `apps/extension/manifest.json`, for example `"https://chipper.example.com/*"`, then reload the extension on `chrome://extensions`.
+- **Let the extension talk to your address.** The extension only talks to the sites listed in its manifest: `localhost`, `127.0.0.1` and the public site. In `apps/extension/manifest.json`, add your address (for example `"https://chipper.example.com/*"`) to `externally_connectable.matches` and to the `matches` of the `app-bridge.js` content script, then reload the extension.
 - **Spotify needs HTTPS.** Apart from `127.0.0.1`, Spotify only accepts `https://` redirect URIs. Add `https://your-address/dashboard/spotify` to your Spotify app.
 
 ## Why Spotify needs your own copy
