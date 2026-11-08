@@ -19,6 +19,7 @@ export default defineConfig({
       VITE_SPOTIFY_SCOPE: "",
       VITE_SPOTIFY_AUTHORIZATION_ENDPOINT: "",
       VITE_SPOTIFY_TOKEN_ENDPOINT: "",
+      VITE_SERVER: "",
     },
   },
   // npm run preview, for running a production build on your own computer
@@ -33,13 +34,9 @@ export default defineConfig({
     host: "127.0.0.1",
     port: 5173,
     strictPort: true,
-    //remove for prod
+    // A Chipper server running from apps/server, for VITE_SERVER=true
     proxy: {
-      "/api": {
-        target: "http://127.0.0.1:5000", // Your Python server
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
-      },
+      "/api": "http://127.0.0.1:8080",
     },
   },
 });

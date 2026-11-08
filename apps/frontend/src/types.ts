@@ -151,3 +151,12 @@ export type Episode = {
   // When Spotify last listed it
   lastSyncedAt?: number;
 };
+
+// One per record the sync server has, keyed "video:<id>" and so on, plus
+// "cursor" for the last revision this device pulled
+export type SyncEntry = {
+  key: string;
+  // A fingerprint of the server's copy, to spot what changed here since
+  hash?: string;
+  revision?: number;
+};

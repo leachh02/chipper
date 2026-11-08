@@ -1,4 +1,5 @@
 import { getDB } from "./index";
+import { notifyChange } from "./changes";
 import { DEFAULT_PREFERENCES } from "./init";
 import type {
   Video,
@@ -20,6 +21,7 @@ export async function getAllVideos(): Promise<Video[]> {
 export async function upsertVideo(video: Video) {
   const db = await getDB();
   await db.put("videos", video);
+  notifyChange("local");
 }
 
 export async function updateMeta(lastImportAt: number) {
@@ -77,6 +79,7 @@ export async function importRawVideos(
   }
 
   await tx.done;
+  notifyChange("local");
   return summary;
 }
 
@@ -91,6 +94,7 @@ export async function markRemovedFromWatchLater(ids: string[]) {
   }
 
   await tx.done;
+  notifyChange("local");
 }
 
 // Saves the user's full list of saved albums, keeping Chipper's own fields.
@@ -131,6 +135,7 @@ export async function importAlbums(albums: Album[]): Promise<ImportSummary> {
   }
 
   await tx.done;
+  notifyChange("local");
   return summary;
 }
 
@@ -144,6 +149,7 @@ export async function setAlbumFlags(
 
   const updated = { ...album, ...flags, changedAt: Date.now() };
   await db.put("albums", updated);
+  notifyChange("local");
   return updated;
 }
 
@@ -164,6 +170,7 @@ export async function saveAlbumGenres(genresById: Map<string, string[]>) {
   }
 
   await tx.done;
+  notifyChange("local");
   return kept;
 }
 
@@ -178,6 +185,7 @@ export async function setAlbumGenres(
   const now = Date.now();
   const updated = { ...album, genres, genresEdited: true, genresCheckedAt: now, changedAt: now };
   await db.put("albums", updated);
+  notifyChange("local");
   return updated;
 }
 
@@ -233,6 +241,7 @@ export async function importEpisodes(
   }
 
   await tx.done;
+  notifyChange("local");
   return summary;
 }
 
@@ -251,6 +260,7 @@ export async function setEpisodeStatus(
   await tx.objectStore("episodes").put(episode);
   await tx.objectStore("events").add(newEvent("episode", id, status));
   await tx.done;
+  notifyChange("local");
 
   return episode;
 }
@@ -289,6 +299,7 @@ export async function setVideoStatus(
   await tx.objectStore("videos").put(video);
   await tx.objectStore("events").add(newEvent("video", id, status));
   await tx.done;
+  notifyChange("local");
 
   return video;
 }
@@ -311,6 +322,7 @@ export async function setAlbumStatus(
   await tx.objectStore("albums").put(album);
   await tx.objectStore("events").add(newEvent("album", id, status));
   await tx.done;
+  notifyChange("local");
 
   return album;
 }

@@ -1,0 +1,19 @@
+# Self-hosted Chipper. Start it with: docker compose up -d
+# Then open http://<this machine>:8080 and create the admin account.
+services:
+  chipper:
+    build:
+      context: .
+      args:
+        # Optional: your own Spotify app's client ID. See SELF_HOSTING.md.
+        VITE_SPOTIFY_CLIENT_ID: ""
+    container_name: chipper
+    ports:
+      - "8080:8080"
+    volumes:
+      # The database: everyone's accounts and synced data
+      - chipper-data:/data
+    restart: unless-stopped
+
+volumes:
+  chipper-data:

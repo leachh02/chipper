@@ -1,4 +1,5 @@
 import { getDB } from "./index";
+import { notifyChange } from "./changes";
 import { DB_VERSION } from "./constants";
 import type { Album, ChipEvent, Episode, ItemType, Preferences, Video } from "../types";
 
@@ -101,7 +102,7 @@ function syncedAt(type: ItemType, item: Item): number {
 }
 
 // Latest status change per item, for items saved before changedAt existed
-function lastEventTimes(events: ChipEvent[]): Map<string, number> {
+export function lastEventTimes(events: ChipEvent[]): Map<string, number> {
   const times = new Map<string, number>();
   for (const e of events) {
     const key = `${e.itemType}:${e.itemId}`;
@@ -181,6 +182,7 @@ export async function restoreBackup(
   }
 
   await tx.done;
+  notifyChange("local");
   return result;
 }
 

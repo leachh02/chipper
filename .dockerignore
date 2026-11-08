@@ -1,0 +1,15 @@
+# Keep secrets and build output out of the image
+**/.env
+**/node_modules
+**/dist
+**/target
+**/.DS_Store
+.git
+.github
+.idea
+.vscode
+.claude
+apps/ai
+apps/backend
+apps/extension
+watchlater.json

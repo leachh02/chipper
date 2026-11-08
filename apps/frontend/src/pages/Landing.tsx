@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   FaCheckCircle,
@@ -11,6 +11,7 @@ import {
 import { SPOTIFY } from "../config";
 import { getAllAlbums, getAllEpisodes, getAllEvents, getAllVideos } from "../db/queries";
 import type { ChipStatus } from "../types";
+import { useRemoteChanges } from "../db/useRemoteChanges";
 import { getFlag, setFlag } from "../utils/flags";
 import { formatRuntime } from "../utils/format";
 import { durationToSeconds, pingExtension } from "../utils/youtube";
@@ -89,10 +90,15 @@ export default function Landing() {
   const [extension, setExtension] = useState<boolean | null>(null);
   const [guideHidden, setGuideHidden] = useState(() => getFlag("guideHidden"));
 
-  useEffect(() => {
+  const reload = useCallback(() => {
     loadSummary().then(setSummary);
-    pingExtension().then(setExtension);
   }, []);
+
+  useEffect(() => {
+    reload();
+    pingExtension().then(setExtension);
+  }, [reload]);
+  useRemoteChanges(reload);
 
   if (!summary) return <div className="page">Loading...</div>;
 

@@ -1,7 +1,17 @@
 import type { ReactNode } from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { FaDatabase, FaHome, FaHourglassHalf, FaSpotify, FaYoutube } from "react-icons/fa";
-import { SPOTIFY } from "../config";
+import {
+  FaCloud,
+  FaDatabase,
+  FaExclamationTriangle,
+  FaHome,
+  FaHourglassHalf,
+  FaSpotify,
+  FaSyncAlt,
+  FaYoutube,
+} from "react-icons/fa";
+import { SERVER, SPOTIFY } from "../config";
+import { useSync } from "../sync/context";
 
 type Item = { to: string; label: string; short: string; icon: ReactNode };
 
@@ -41,6 +51,7 @@ export default function Layout() {
               </NavLink>
             ))}
           </nav>
+          {SERVER.enabled && <SyncBadge />}
         </div>
       </header>
 
@@ -73,5 +84,27 @@ export default function Layout() {
         </div>
       </nav>
     </div>
+  );
+}
+
+// Where sync stands, on self-hosted copies. Opens the data page, where you
+// sign in.
+function SyncBadge() {
+  const { state, error } = useSync();
+  const look = {
+    off: { icon: <FaCloud />, label: "Not syncing", className: "text-muted" },
+    syncing: { icon: <FaSyncAlt className="animate-spin" />, label: "Syncing", className: "text-muted" },
+    synced: { icon: <FaCloud />, label: "Synced", className: "text-accent" },
+    error: { icon: <FaExclamationTriangle />, label: "Sync problem", className: "text-danger" },
+  }[state];
+  return (
+    <NavLink
+      to="/data"
+      title={state === "error" ? error : look.label}
+      className={`ml-auto flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm ${look.className}`}
+    >
+      {look.icon}
+      <span className="hidden md:inline">{look.label}</span>
+    </NavLink>
   );
 }

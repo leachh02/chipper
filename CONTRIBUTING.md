@@ -13,6 +13,20 @@ npm run dev
 
 Open http://127.0.0.1:5173. After changing anything in `apps/extension`, click the reload button on Chipper's card at `chrome://extensions`.
 
+To work on sync, also run the server (Java 21), and start the app with `VITE_SERVER=true` so it shows sign-in. The dev server passes `/api` through to port 8080.
+
+```bash
+cd apps/server
+CHIPPER_DATA_DIR=data ./mvnw spring-boot:run
+```
+
+```bash
+cd apps/frontend
+VITE_SERVER=true npm run dev
+```
+
+The server's tests run with `./mvnw test` from `apps/server`, and CI runs them too.
+
 ## Before you open a pull request
 
 Run the same checks as CI, from `apps/frontend`:
@@ -34,6 +48,8 @@ Add or update tests when you change how data is imported or merged (`src/db/quer
 | `apps/frontend/src/db` | The IndexedDB schema, migrations (`index.ts`) and every read and write (`queries.ts`) |
 | `apps/frontend/src/utils` | Talking to YouTube, the extension, Spotify and Discogs, and the chip session queue |
 | `apps/frontend/src/config.ts` | Everything read from `.env`, with defaults |
+| `apps/frontend/src/sync` | Signing in to the server, and the sync engine (`engine.ts`): pull, merge with the backup rules, push |
+| `apps/server` | The self-hosted server. `auth/` is accounts and sign-in tokens, `sync/` stores each user's records against a rising revision |
 | `apps/extension` | The Chrome extension: `background.js` takes requests from the app, and `scripts/` reads and edits the Watch Later page |
 
 A few things to keep in mind:

@@ -25,6 +25,7 @@ import {
   setAlbumStatus,
   setEpisodeStatus,
 } from "../db/queries";
+import { useRemoteChanges } from "../db/useRemoteChanges";
 import type {
   Album,
   ChipStatus,
@@ -146,6 +147,7 @@ export default function SpotifyDashboard() {
 
     init();
   }, [reload, sync]);
+  useRemoteChanges(reload);
 
   function updatePreferences(changes: Partial<SpotifyPreferences>) {
     if (!preferences) return;

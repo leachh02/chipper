@@ -18,6 +18,7 @@ import {
   savePreferences,
   setVideoStatus,
 } from "../db/queries";
+import { useRemoteChanges } from "../db/useRemoteChanges";
 
 const MAX_VIDEO_MINUTES = 180;
 
@@ -59,6 +60,7 @@ export default function YTWatchList() {
   useEffect(() => {
     reload();
   }, [reload]);
+  useRemoteChanges(reload);
 
   useEffect(() => {
     getPreferences().then(setPreferences);

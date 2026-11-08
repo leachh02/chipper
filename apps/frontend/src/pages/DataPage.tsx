@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import ServerAccount from "../components/ServerAccount";
+import { SERVER } from "../config";
 import {
   backupFileName,
   createBackup,
@@ -7,6 +9,8 @@ import {
   type BackupCounts,
 } from "../db/backup";
 import { getAllAlbums, getAllEpisodes, getAllVideos } from "../db/queries";
+import { useRemoteChanges } from "../db/useRemoteChanges";
+import { useSync } from "../sync/context";
 
 function describeCounts(counts: BackupCounts) {
   const parts = [
@@ -27,7 +31,9 @@ export default function DataPage() {
   const [error, setError] = useState("");
   const [persisted, setPersisted] = useState<boolean | null>(null);
 
-  async function loadCounts() {
+  const { session } = useSync();
+
+  const loadCounts = useCallback(async () => {
     const [videos, albums, episodes] = await Promise.all([
       getAllVideos(),
       getAllAlbums(),
@@ -38,12 +44,13 @@ export default function DataPage() {
       albums: albums.filter((a) => !a.removedAt).length,
       episodes: episodes.filter((e) => !e.removedAt).length,
     });
-  }
+  }, []);
 
   useEffect(() => {
     loadCounts();
     navigator.storage?.persisted?.().then(setPersisted);
-  }, []);
+  }, [loadCounts]);
+  useRemoteChanges(loadCounts);
 
   async function exportData() {
     const backup = await createBackup();
@@ -99,10 +106,13 @@ export default function DataPage() {
 
       <p className="my-2">
         Chipper keeps everything in this browser, on this device
-        {counts && describeCounts(counts) ? `: ${describeCounts(counts)}` : ""}. Nothing is
-        stored online, so save a backup now and then. A backup also moves your choices between
-        devices, such as from your phone to the PC that syncs Watch Later.
+        {counts && describeCounts(counts) ? `: ${describeCounts(counts)}` : ""}.{" "}
+        {session
+          ? "It's also synced to your Chipper server, but a backup now and then doesn't hurt."
+          : "Nothing is stored online, so save a backup now and then. A backup also moves your choices between devices, such as from your phone to the PC that syncs Watch Later."}
       </p>
+
+      {SERVER.enabled && <ServerAccount />}
 
       <section className="my-6">
         <h2 className="section-title">Save a backup</h2>

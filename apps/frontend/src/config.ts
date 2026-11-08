@@ -30,3 +30,9 @@ export const SPOTIFY = {
   // user-read-playback-position shows how far through each saved episode you are
   scope: env.VITE_SPOTIFY_SCOPE || "user-library-read user-read-playback-position",
 };
+
+// Set by the self-hosted server's build (see apps/server), which serves
+// this app and the sync API from the same address
+export const SERVER = {
+  enabled: env.VITE_SERVER === "true",
+};

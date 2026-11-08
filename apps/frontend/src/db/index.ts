@@ -7,6 +7,7 @@ import type {
   Meta,
   Album,
   Episode,
+  SyncEntry,
 } from "../types";
 
 export interface ChipperDB extends DBSchema {
@@ -34,6 +35,11 @@ export interface ChipperDB extends DBSchema {
   meta: {
     key: string;
     value: Meta;
+  };
+  // What the sync server last had for each record (see sync/engine.ts)
+  sync: {
+    key: string;
+    value: SyncEntry;
   };
 }
 
@@ -64,6 +70,9 @@ export function getDB() {
         }
         if (!db.objectStoreNames.contains("episodes")) {
           db.createObjectStore("episodes", { keyPath: "id" });
+        }
+        if (!db.objectStoreNames.contains("sync")) {
+          db.createObjectStore("sync", { keyPath: "key" });
         }
 
         // v4: videoEvents was replaced by the shared events store
