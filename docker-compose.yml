@@ -2,11 +2,9 @@
 # Then open http://<this machine>:8080 and create the admin account.
 services:
   chipper:
-    build:
-      context: .
-      args:
-        # Optional: your own Spotify app's client ID. See SELF_HOSTING.md.
-        VITE_SPOTIFY_CLIENT_ID: ""
+    # Spotify is set up from apps/frontend/.env, as for npm run dev.
+    # See SELF_HOSTING.md.
+    build: .
     container_name: chipper
     ports:
       - "8080:8080"

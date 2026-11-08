@@ -96,7 +96,7 @@ To update, pull the latest code and run `docker compose up -d --build` again.
 
 ### Spotify
 
-Set `VITE_SPOTIFY_CLIENT_ID` under `args` in `docker-compose.yml`, then run `docker compose up -d --build`. In your Spotify app, add the redirect URI `http://127.0.0.1:8080/dashboard/spotify` (for use on the server's own machine) or `https://<your address>/dashboard/spotify`. See [Add Spotify](#3-add-spotify-optional) for setting up the Spotify app itself.
+Put `VITE_SPOTIFY_CLIENT_ID` in `apps/frontend/.env` as in [Add Spotify](#3-add-spotify-optional), then run `docker compose up -d --build`. The image is built with that file, so rebuild after changing it. In your Spotify app, add the redirect URI `http://127.0.0.1:8080/dashboard/spotify` (for use on the server's own machine) or `https://<your address>/dashboard/spotify`.
 
 ### Back up the server
 

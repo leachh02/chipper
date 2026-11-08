@@ -6,10 +6,9 @@ FROM node:22-alpine AS app
 WORKDIR /src
 COPY apps/frontend/package.json apps/frontend/package-lock.json ./
 RUN npm ci
+# Includes apps/frontend/.env, if you made one, for your Spotify client ID
 COPY apps/frontend/ ./
-# Optional: your own Spotify app's client ID (Spotify caps each app at 5 users)
-ARG VITE_SPOTIFY_CLIENT_ID=""
-ENV VITE_SERVER=true VITE_SPOTIFY_CLIENT_ID=$VITE_SPOTIFY_CLIENT_ID
+ENV VITE_SERVER=true
 RUN npm run build
 
 # 2. Build the server, with the app bundled inside
