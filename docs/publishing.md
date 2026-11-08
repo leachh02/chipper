@@ -57,7 +57,9 @@ Use the same text for both stores.
 > Reads and tidies the user's YouTube Watch Later playlist for the Chipper web app, which YouTube's API doesn't support.
 
 **Permission justifications:**
-- `tabs`: Opens the user's Watch Later page in a new tab to read or tidy it, closes it afterwards, and returns focus to the Chipper tab.
+
+The extension asks for no API permissions. Opening, focusing and closing tabs doesn't need `tabs`, which only unlocks reading tab URLs and titles; an earlier submission was rejected for requesting it unused.
+
 - Host permission `https://www.youtube.com/*`: Lets the content script run on the Watch Later playlist page, where it reads the videos and removes the ones the user has finished.
 - Content scripts on `localhost`, `127.0.0.1` and `leachh02.github.io/chipper`: Pass messages between the Chipper web app and the extension. They only run on Chipper's own pages.
 
