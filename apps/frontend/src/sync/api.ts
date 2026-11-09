@@ -1,4 +1,4 @@
-// Talks to a self-hosted Chipper server (apps/server), which serves this
+// Talks to a self-hosted Chipper server (apps/backend), which serves this
 // app and its API from the same address.
 import type { TopicKind, Topics } from "../types";
 

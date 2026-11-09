@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: apps/server
+        working-directory: apps/backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -36,7 +36,7 @@ jobs:
           distribution: temurin
           java-version: 21
           cache: maven
-          cache-dependency-path: apps/server/pom.xml
+          cache-dependency-path: apps/backend/pom.xml
       - run: ./mvnw -B verify
 
   ai:

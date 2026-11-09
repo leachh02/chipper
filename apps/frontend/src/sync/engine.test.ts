@@ -12,7 +12,7 @@ const raw = (videoId: string): RawVideo => ({
   url: `https://www.youtube.com/watch?v=${videoId}`,
 });
 
-// Behaves like apps/server: one revision per push, and a push is refused if
+// Behaves like apps/backend: one revision per push, and a push is refused if
 // it touches a record changed since `base`
 class FakeServer {
   revision = 0;

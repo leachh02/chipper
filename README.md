@@ -35,7 +35,7 @@ That's enough for YouTube. To add Spotify, or to run Chipper anywhere other than
 | --- | --- |
 | `apps/frontend` | The app: React, Vite and Tailwind, storing everything in IndexedDB |
 | `apps/extension` | Chrome extension that reads your Watch Later playlist from YouTube |
-| `apps/server` | The optional self-hosted server: accounts and live sync between devices (Java, Spring Boot and SQLite) |
+| `apps/backend` | The optional self-hosted server: accounts and live sync between devices (Java, Spring Boot and SQLite) |
 | `apps/ai` | Optional service that groups your backlog by topic, for the self-hosted server (Python) |
 | `.github` | CI, plus issue and pull request templates |
 

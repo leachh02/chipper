@@ -10,6 +10,5 @@
 .vscode
 .claude
 apps/ai
-apps/backend
 apps/extension
 watchlater.json

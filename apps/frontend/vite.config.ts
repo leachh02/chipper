@@ -64,7 +64,7 @@ export default defineConfig(({ mode }) => ({
     host: "127.0.0.1",
     port: 5173,
     strictPort: true,
-    // A Chipper server running from apps/server, for VITE_SERVER=true
+    // A Chipper server running from apps/backend, for VITE_SERVER=true
     proxy: {
       "/api": "http://127.0.0.1:8080",
       "/config.js": "http://127.0.0.1:8080",

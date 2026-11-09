@@ -186,8 +186,8 @@ You need Java 21 and Node.js 22:
 cd apps/frontend
 npm ci
 VITE_SERVER=true npm run build
-cp -R dist/. ../server/src/main/resources/static/
-cd ../server
+cp -R dist/. ../backend/src/main/resources/static/
+cd ../backend
 ./mvnw -DskipTests package
 CHIPPER_DATA_DIR=/where/to/keep/data java -jar target/chipper-server-*.jar
 ```

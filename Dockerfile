@@ -18,10 +18,10 @@ RUN npm run build
 # 2. Build the server, with the app bundled inside
 FROM --platform=$BUILDPLATFORM eclipse-temurin:21-jdk-alpine AS server
 WORKDIR /src
-COPY apps/server/.mvn .mvn
-COPY apps/server/mvnw apps/server/pom.xml ./
+COPY apps/backend/.mvn .mvn
+COPY apps/backend/mvnw apps/backend/pom.xml ./
 RUN ./mvnw -q -B dependency:go-offline
-COPY apps/server/src src
+COPY apps/backend/src src
 COPY --from=app /src/dist src/main/resources/static
 RUN ./mvnw -q -B -DskipTests package
 
