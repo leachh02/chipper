@@ -1,5 +1,6 @@
 // Everything a copy of Chipper can be configured with, read from .env at
-// build time. Only the Spotify client ID has no default.
+// build time, or for the Spotify client ID, from a Chipper server. Only
+// the Spotify client ID has no default.
 const env = import.meta.env;
 
 // The ID that apps/extension's manifest key gives the unpacked extension.
@@ -19,7 +20,16 @@ const EXTENSION_HOSTS = ["localhost", "127.0.0.1", "leachh02.github.io"];
 export const EXTENSION_NEEDS_ADDRESS =
   typeof window !== "undefined" && !EXTENSION_HOSTS.includes(window.location.hostname);
 
-const spotifyClientId: string = env.VITE_SPOTIFY_CLIENT_ID ?? "";
+declare global {
+  interface Window {
+    // Set by a Chipper server's /config.js, so its published image needs
+    // no settings at build time
+    CHIPPER_CONFIG?: { spotifyClientId?: string };
+  }
+}
+const fromServer = typeof window === "undefined" ? undefined : window.CHIPPER_CONFIG;
+
+const spotifyClientId: string = fromServer?.spotifyClientId || env.VITE_SPOTIFY_CLIENT_ID || "";
 
 export const SPOTIFY = {
   // Spotify caps an app in Development Mode at 5 users, so a public copy

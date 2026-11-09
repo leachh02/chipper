@@ -76,17 +76,26 @@ The server is a single Docker container: the app, accounts and sync, with everyt
 
 ### Start it
 
-You need [Docker](https://docs.docker.com/get-docker/) with Compose.
+You need [Docker](https://docs.docker.com/get-docker/) with Compose. There's nothing to build or clone: make a folder, download two files into it, and start Chipper.
 
 ```bash
-git clone https://github.com/leachh02/chipper.git
-cd chipper
-docker compose up -d --build
+mkdir chipper && cd chipper
+curl -fsSLo docker-compose.yml https://raw.githubusercontent.com/leachh02/chipper/main/docker-compose.yml
+curl -fsSLo .env https://raw.githubusercontent.com/leachh02/chipper/main/example.env
+docker compose up -d
 ```
 
 Open `http://<the server's address>:8080`, go to **Your data**, and create the first account. That account is the admin, who adds everyone else from the same page. Each person signs in on each of their devices, and what's already on a device is merged into their account the first time.
 
-To update, pull the latest code and run `docker compose up -d --build` again.
+`.env` holds the settings: the version, the port, your Spotify client ID, and whether to run grouping by topic. Run `docker compose up -d` after changing it.
+
+### Update
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+`CHIPPER_VERSION=latest` follows the newest Chipper. To stay on a release until you choose to move, set it to one, such as `1.2`.
 
 ### Phones, HTTPS and the extension
 
@@ -96,19 +105,15 @@ To update, pull the latest code and run `docker compose up -d --build` again.
 
 ### Spotify
 
-Put `VITE_SPOTIFY_CLIENT_ID` in `apps/frontend/.env` as in [Add Spotify](#3-add-spotify-optional), then run `docker compose up -d --build`. The image is built with that file, so rebuild after changing it. In your Spotify app, add the redirect URI `http://127.0.0.1:8080/dashboard/spotify` (for use on the server's own machine) or `https://<your address>/dashboard/spotify`.
+Make a Spotify app as in [Add Spotify](#3-add-spotify-optional), put its client ID in `.env` as `SPOTIFY_CLIENT_ID`, and run `docker compose up -d`. In your Spotify app, add the redirect URI `http://127.0.0.1:8080/dashboard/spotify` (for use on the server's own machine) or `https://<your address>/dashboard/spotify`. Spotify accepts no other `http://` address, so on any other device you need HTTPS (see above).
 
 ### Group by topic (optional)
 
 Chipper can sort what's left of your Watch Later and podcasts into groups by topic, like "Cooking · Recipe · Pasta" or "Astronomy · Moons · Telescope". Then **Group by topic** shows your list under each group, and a chip session can stick to the topics you pick.
 
-It runs in a second container with a small language model ([all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)). Everything happens on your own machine: nothing is sent anywhere, and there's no API key. Start it with the `ai` profile:
+It runs in a second container with a small language model ([all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)). Everything happens on your own machine: nothing is sent anywhere, and there's no API key. To turn it on, uncomment `COMPOSE_PROFILES=ai` in `.env` and run `docker compose up -d`.
 
-```bash
-docker compose --profile ai up -d --build
-```
-
-The first build downloads the model into the image, about 650 MB in all. The service loads the model when someone groups their backlog, and lets it go after 10 minutes unused (set `CHIPPER_AI_IDLE_MINUTES` to change that).
+Its image is about 650 MB, with the model inside. The service loads the model when someone groups their backlog, and lets it go after 10 minutes unused.
 
 Then use **Group** on Watch Later or on Spotify's podcasts. Groups sync to all your devices. Use **Regroup** when your backlog has changed a lot; anything added since shows under "Not grouped yet".
 
@@ -122,7 +127,56 @@ docker compose cp chipper:/data ./chipper-backup
 docker compose start
 ```
 
+To restore a copy, or move Chipper to another machine, start Chipper there once, then:
+
+```bash
+docker compose stop
+docker compose cp ./chipper-backup/. chipper:/data/
+docker compose run --rm -u root --entrypoint chown chipper -R chipper:chipper /data
+docker compose start
+```
+
 Each device also keeps its own full copy, and **Your data** still downloads a backup file.
+
+### On Proxmox
+
+Chipper runs well in a small LXC container on [Proxmox VE](https://www.proxmox.com/en/proxmox-virtual-environment), so it's always on without needing your PC.
+
+1. **Create the container.** Use **Create CT** with the Debian 12 template, and keep it unprivileged. 1 core, 1 GB of memory and 8 GB of disk are plenty (2 GB of memory and 12 GB of disk with grouping by topic). Give it a fixed address, with a static IP or a DHCP reservation.
+2. **Let it run Docker.** Under the container's **Options → Features**, tick **nesting** and **keyctl**.
+3. **Install Docker**, in the container's console:
+   ```bash
+   apt update && apt install -y curl
+   curl -fsSL https://get.docker.com | sh
+   ```
+4. **Start Chipper** as in [Start it](#start-it), then open `http://<the container's address>:8080`.
+
+Proxmox's own backups of the container include Chipper's data.
+
+**For HTTPS with Tailscale**, the container needs the host's network tunnel device. On the Proxmox host, add these lines to `/etc/pve/lxc/<container ID>.conf`, then restart the container:
+
+```
+lxc.cgroup2.devices.allow: c 10:200 rwm
+lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
+```
+
+Then, in the container:
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+tailscale up
+tailscale serve --bg 8080
+```
+
+Chipper is then at `https://<container name>.<your tailnet>.ts.net` on all your Tailscale devices, ready to install on your phone and to use as Spotify's redirect address. If you already run a reverse proxy, point it at `<the container's address>:8080` instead.
+
+### Build the images yourself
+
+From a clone of this repository, with your settings in `.env` at its root:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
 
 ### Without Docker
 
@@ -138,7 +192,7 @@ cd ../server
 CHIPPER_DATA_DIR=/where/to/keep/data java -jar target/chipper-server-*.jar
 ```
 
-`PORT` changes the port from 8080. For grouping by topic, run the service in `apps/ai` (see its README) and set `CHIPPER_AI_URL` to its address.
+`PORT` changes the port from 8080, and `SPOTIFY_CLIENT_ID` adds Spotify. For grouping by topic, run the service in `apps/ai` (see its README) and set `CHIPPER_AI_URL` to its address.
 
 ## Why Spotify needs your own copy
 

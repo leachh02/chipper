@@ -1,28 +1,30 @@
-# Self-hosted Chipper. Start it with: docker compose up -d
+# Self-hosted Chipper. Put this file and example.env (renamed to .env) in a
+# folder, then run: docker compose up -d
 # Then open http://<this machine>:8080 and create the admin account.
-#
-# To also group your backlog by topic, start it with the AI service:
-#   docker compose --profile ai up -d
+# See SELF_HOSTING.md, and docker-compose.build.yml to build the images
+# yourself.
+name: chipper
+
 services:
   chipper:
-    # Spotify is set up from apps/frontend/.env, as for npm run dev.
-    # See SELF_HOSTING.md.
-    build: .
+    image: ghcr.io/leachh02/chipper:${CHIPPER_VERSION:-latest}
     container_name: chipper
     ports:
-      - "8080:8080"
+      - "${CHIPPER_PORT:-8080}:8080"
     volumes:
       # The database: everyone's accounts and synced data
       - chipper-data:/data
     environment:
+      SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID:-}
       # Grouping by topic is offered only while this answers, so it's
       # harmless without the ai profile
       CHIPPER_AI_URL: http://chipper-ai:8000
     restart: unless-stopped
 
+  # Started with the ai profile: COMPOSE_PROFILES=ai in .env
   chipper-ai:
     profiles: [ai]
-    build: apps/ai
+    image: ghcr.io/leachh02/chipper-ai:${CHIPPER_VERSION:-latest}
     container_name: chipper-ai
     # Only the Chipper server talks to it, so no ports are published
     restart: unless-stopped

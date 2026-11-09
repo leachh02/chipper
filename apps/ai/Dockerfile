@@ -1,5 +1,5 @@
-# Chipper's optional clustering service. Built and run by docker-compose.yml
-# at the repo root: docker compose --profile ai up -d
+# Chipper's optional clustering service, published as
+# ghcr.io/leachh02/chipper-ai and run by docker-compose.yml at the repo root
 FROM python:3.12-slim
 WORKDIR /app
 COPY requirements.txt ./

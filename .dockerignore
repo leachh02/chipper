@@ -1,7 +1,5 @@
 # Keep secrets and build output out of the image
 **/.env
-# Except the app's: its VITE_ settings end up in the app anyway
-!apps/frontend/.env
 **/node_modules
 **/dist
 **/target

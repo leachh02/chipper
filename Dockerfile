@@ -1,18 +1,22 @@
 # Self-hosted Chipper: the app, accounts and sync in one container.
-#   docker compose up -d     (see docker-compose.yml and SELF_HOSTING.md)
+# Published as ghcr.io/leachh02/chipper (see docker-compose.yml and
+# SELF_HOSTING.md). Nothing personal goes in it: the Spotify client ID is
+# read when the server starts.
 
-# 1. Build the app, set up to sync with the server it's served from
-FROM node:22-alpine AS app
+# 1. Build the app, set up to sync with the server it's served from. The app
+# and the jar are the same on every platform, so they're built only once.
+FROM --platform=$BUILDPLATFORM node:22-alpine AS app
 WORKDIR /src
 COPY apps/frontend/package.json apps/frontend/package-lock.json ./
 RUN npm ci
-# Includes apps/frontend/.env, if you made one, for your Spotify client ID
 COPY apps/frontend/ ./
-ENV VITE_SERVER=true
+# The Watch Later extension's IDs, as for VITE_EXTENSIONS_ID in .env
+ARG VITE_EXTENSIONS_ID=""
+ENV VITE_SERVER=true VITE_EXTENSIONS_ID=$VITE_EXTENSIONS_ID
 RUN npm run build
 
 # 2. Build the server, with the app bundled inside
-FROM eclipse-temurin:21-jdk-alpine AS server
+FROM --platform=$BUILDPLATFORM eclipse-temurin:21-jdk-alpine AS server
 WORKDIR /src
 COPY apps/server/.mvn .mvn
 COPY apps/server/mvnw apps/server/pom.xml ./

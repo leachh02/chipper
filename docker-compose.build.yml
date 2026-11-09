@@ -1,0 +1,7 @@
+# Builds the images from this checkout instead of downloading them:
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+services:
+  chipper:
+    build: .
+  chipper-ai:
+    build: apps/ai
