@@ -9,6 +9,21 @@ export default defineConfig({
   // VITE_BASE=/chipper/. Everything else is served from the root.
   base: process.env.VITE_BASE || "/",
   plugins: [react(), tailwindcss()],
+  build: {
+    rollupOptions: {
+      output: {
+        // React and the router change far less often than Chipper, so a
+        // browser keeps them cached across updates
+        manualChunks: (id) =>
+          /node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(id)
+            ? "vendor"
+            : undefined,
+      },
+    },
+    // react-player's HLS and DASH players are over this, but they're only
+    // downloaded for those kinds of video, never for YouTube
+    chunkSizeWarningLimit: 1000,
+  },
   test: {
     setupFiles: ["src/test/setup.ts"],
     // Ignore your .env, so tests run the same here as in CI

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import {
   FaCloud,
@@ -57,7 +57,10 @@ export default function Layout() {
 
       {/* Room for the tab bar on phones */}
       <main className="flex-1 pb-20 sm:pb-0">
-        <Outlet />
+        {/* While a page's code downloads */}
+        <Suspense fallback={<div className="page">Loading...</div>}>
+          <Outlet />
+        </Suspense>
       </main>
 
       <nav
