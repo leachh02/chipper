@@ -23,9 +23,13 @@ const STORES = {
   album: "albums",
   episode: "episodes",
   event: "events",
+  cluster: "topics",
 } as const;
 
 const KINDS = Object.keys(STORES) as SyncKind[];
+// Written only by the server: taken as they come, never pushed
+const SERVER_OWNED: SyncKind[] = ["cluster"];
+const PUSHED = KINDS.filter((kind) => !SERVER_OWNED.includes(kind)) as Exclude<SyncKind, "cluster">[];
 const CURSOR = "cursor";
 const ATTEMPTS = 5;
 
@@ -68,7 +72,7 @@ export async function resetSync() {
 
 async function applyPulled({ revision, records }: Pulled): Promise<number> {
   const db = await getDB();
-  const tx = db.transaction(["videos", "albums", "episodes", "events", "sync"], "readwrite");
+  const tx = db.transaction(["videos", "albums", "episodes", "events", "topics", "sync"], "readwrite");
   const sync = tx.objectStore("sync");
 
   const localEvents = lastEventTimes(await tx.objectStore("events").getAll());
@@ -84,7 +88,7 @@ async function applyPulled({ revision, records }: Pulled): Promise<number> {
     const local = (await store.get(record.id)) as object | undefined;
 
     const value =
-      local && record.kind !== "event"
+      local && record.kind !== "event" && !SERVER_OWNED.includes(record.kind)
         ? mergeItem(record.kind as ItemType, local as never, record.data as never, localEvents, incomingEvents)
         : record.data;
     if (!local || canonical(value) !== canonical(local)) {
@@ -111,7 +115,7 @@ async function collectChanges(): Promise<Change[]> {
   );
 
   const changes: Change[] = [];
-  for (const kind of KINDS) {
+  for (const kind of PUSHED) {
     for (const item of await tx.objectStore(STORES[kind]).getAll()) {
       const hash = fingerprint(item);
       if (known.get(`${kind}:${item.id}`) !== hash) {

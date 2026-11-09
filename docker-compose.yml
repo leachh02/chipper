@@ -1,5 +1,8 @@
 # Self-hosted Chipper. Start it with: docker compose up -d
 # Then open http://<this machine>:8080 and create the admin account.
+#
+# To also group your backlog by topic, start it with the AI service:
+#   docker compose --profile ai up -d
 services:
   chipper:
     # Spotify is set up from apps/frontend/.env, as for npm run dev.
@@ -11,6 +14,17 @@ services:
     volumes:
       # The database: everyone's accounts and synced data
       - chipper-data:/data
+    environment:
+      # Grouping by topic is offered only while this answers, so it's
+      # harmless without the ai profile
+      CHIPPER_AI_URL: http://chipper-ai:8000
+    restart: unless-stopped
+
+  chipper-ai:
+    profiles: [ai]
+    build: apps/ai
+    container_name: chipper-ai
+    # Only the Chipper server talks to it, so no ports are published
     restart: unless-stopped
 
 volumes:

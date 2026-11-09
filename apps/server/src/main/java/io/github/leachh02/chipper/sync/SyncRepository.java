@@ -55,6 +55,14 @@ public class SyncRepository {
 			.list();
 	}
 
+	// The data of every record of one kind, such as all of a user's videos
+	public List<JsonNode> records(long userId, String kind) {
+		return jdbc.sql("SELECT data FROM records WHERE user_id = ? AND kind = ?")
+			.params(userId, kind)
+			.query((rs, row) -> json.readTree(rs.getString("data")))
+			.list();
+	}
+
 	@Transactional
 	public PushResult push(long userId, long base, List<Incoming> records) {
 		long current = revision(userId);

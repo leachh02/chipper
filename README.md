@@ -36,7 +36,7 @@ That's enough for YouTube. To add Spotify, or to run Chipper anywhere other than
 | `apps/frontend` | The app: React, Vite and Tailwind, storing everything in IndexedDB |
 | `apps/extension` | Chrome extension that reads your Watch Later playlist from YouTube |
 | `apps/server` | The optional self-hosted server: accounts and live sync between devices (Java, Spring Boot and SQLite) |
-| `apps/ai` | Experimental video clustering service (Python), planned for the self-hosted version |
+| `apps/ai` | Optional service that groups your backlog by topic, for the self-hosted server (Python) |
 | `.github` | CI, plus issue and pull request templates |
 
 ## Roadmap
@@ -96,7 +96,7 @@ That's enough for YouTube. To add Spotify, or to run Chipper anywhere other than
 - [ ] Self-hosted server with live sync between devices (phone and PC), Docker friendly (Jellyfin is good architectural inspiration)
   - [x] Accounts (the first is the admin, who adds the rest), live sync of videos, albums, episodes and history, one Docker container with SQLite; see [SELF_HOSTING.md](SELF_HOSTING.md#the-chipper-server)
   - [x] Let the extension work with a server at any address, added from its options page
-  - [ ] AI clusters, available in the self-hosted version only, with a user-chosen number of groups
+  - [x] AI clusters, available in the self-hosted version only, with a user-chosen number of groups; see [SELF_HOSTING.md](SELF_HOSTING.md#group-by-topic-optional)
 - [x] Split the frontend bundle: each page loads on its own, and React is cached across updates
 
 ## Licence

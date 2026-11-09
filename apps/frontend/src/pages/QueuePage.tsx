@@ -7,19 +7,22 @@ import {
   getAllEpisodes,
   getAllVideos,
   getPreferences,
+  getTopics,
   savePreferences,
   setAlbumStatus,
   setEpisodeStatus,
   setVideoStatus,
 } from "../db/queries";
-import type { ChipStatus, ItemType, Preferences, QueuePreferences } from "../types";
+import type { ChipStatus, ItemType, Preferences, QueuePreferences, Topics } from "../types";
 import { formatRuntime } from "../utils/format";
 import { setFlag } from "../utils/flags";
 import {
   albumItems,
   buildQueue,
   episodeItems,
+  inTopics,
   tier,
+  topicKey,
   videoItems,
   type QueueItem,
 } from "../utils/queue";
@@ -61,15 +64,20 @@ export default function QueuePage() {
   const [pool, setPool] = useState<QueueItem[]>([]);
   // Statuses changed during this session, by item key
   const [marked, setMarked] = useState<Record<string, ChipStatus>>({});
+  // Groups by topic from a Chipper server, when there are any
+  const [topics, setTopics] = useState<Topics[]>([]);
 
   async function load() {
-    const [videos, albums, episodes, prefs] = await Promise.all([
+    const [videos, albums, episodes, prefs, videoTopics, episodeTopics] = await Promise.all([
       getAllVideos(),
       getAllAlbums(),
       getAllEpisodes(),
       getPreferences(),
+      getTopics("video"),
+      getTopics("episode"),
     ]);
     setPool([...videoItems(videos), ...albumItems(albums), ...episodeItems(episodes)]);
+    setTopics([videoTopics, episodeTopics].filter((t): t is Topics => !!t));
     setMarked({});
     setPreferences(prefs);
   }
@@ -86,18 +94,25 @@ export default function QueuePage() {
         ...preferences.queue,
         // Albums and podcasts only exist where Spotify is set up
         sources: preferences.queue.sources.filter((s) => SOURCES.some((x) => x.type === s)),
+        topics: preferences.queue.topics ?? [],
       },
     [preferences],
   );
-  const queue = useMemo(
+  // Everything the session can pick from, with these services and topics
+  const candidates = useMemo(
     () =>
       settings
-        ? buildQueue(
+        ? inTopics(
             pool.filter((item) => settings.sources.includes(item.type)),
-            settings.minutes,
+            topics,
+            settings.topics,
           )
         : [],
-    [pool, settings],
+    [pool, settings, topics],
+  );
+  const queue = useMemo(
+    () => (settings ? buildQueue(candidates, settings.minutes) : []),
+    [candidates, settings],
   );
 
   if (!preferences || !settings) return <div className="page">Loading...</div>;
@@ -120,7 +135,17 @@ export default function QueuePage() {
   const clearedMinutes = queue
     .filter((item) => statusOf(item) === "completed")
     .reduce((sum, item) => sum + item.minutes, 0);
-  const available = pool.filter((item) => settings.sources.includes(item.type)).length;
+  const available = candidates.length;
+  // Topics of the services in this session
+  const topicChoices = topics.filter((t) => settings.sources.includes(t.itemType));
+
+  function toggleTopic(key: string) {
+    update({
+      topics: settings!.topics.includes(key)
+        ? settings!.topics.filter((k) => k !== key)
+        : [...settings!.topics, key],
+    });
+  }
 
   const progress = plannedMinutes ? clearedMinutes / plannedMinutes : 0;
 
@@ -181,6 +206,39 @@ export default function QueuePage() {
             ))}
           </div>
         )}
+
+        {topicChoices.length > 0 && (
+          <div className="mt-4">
+            <h2 className="section-title">Stick to topics</h2>
+            {topicChoices.map(({ itemType, groups }) => (
+              <div key={itemType} className="mb-2 flex flex-wrap items-center gap-1.5">
+                {topicChoices.length > 1 && (
+                  <span className="mr-1 text-muted" title={ALL_SOURCES.find((s) => s.type === itemType)?.label}>
+                    {ALL_SOURCES.find((s) => s.type === itemType)?.icon}
+                  </span>
+                )}
+                {groups.map(({ label }) => {
+                  const key = topicKey(itemType, label);
+                  const on = settings.topics.includes(key);
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      aria-pressed={on}
+                      className={`btn px-2.5 py-1 text-xs ${on ? "btn-primary" : ""}`}
+                      onClick={() => toggleTopic(key)}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+            <p className="text-xs text-muted">
+              Pick none to include everything.
+            </p>
+          </div>
+        )}
       </section>
 
       <div className="mt-6 mb-3 flex flex-wrap items-end justify-between gap-3">
@@ -214,7 +272,9 @@ export default function QueuePage() {
 
       {queue.length === 0 && (
         <p className="card p-6 text-center text-sm text-muted">
-          {available === 0
+          {available === 0 && settings.topics.length > 0
+            ? "Nothing waiting in these topics. Pick others, or none."
+            : available === 0
             ? `Nothing waiting in your backlog for these services. Sync ${SPOTIFY.enabled ? "Watch Later or Spotify" : "Watch Later"} first.`
             : `Nothing fits in ${minutes(settings.minutes)}. Try more time or another service.`}
         </p>

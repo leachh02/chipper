@@ -1,5 +1,9 @@
 watchlater.json
 *.pyc
+__pycache__/
+.pytest_cache/
+.venv/
+.chipper-ai-venv/
 
 # Logs
 logs

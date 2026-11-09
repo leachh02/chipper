@@ -1,4 +1,4 @@
-import type { Album, ChipStatus, Episode, ItemType, Video } from "../types";
+import type { Album, ChipStatus, Episode, ItemType, Topics, Video } from "../types";
 import { durationToSeconds, thumbnailUrl } from "./youtube";
 
 // One thing to watch or listen to in a session, from any service
@@ -68,6 +68,24 @@ export function episodeItems(episodes: Episode[]): QueueItem[] {
       status: e.status,
       shortlisted: false,
     }));
+}
+
+// "video:Cooking", as kept in the chip session's chosen topics
+export const topicKey = (kind: ItemType, label: string) => `${kind}:${label}`;
+
+// Keeps only items in the chosen topics. A kind with none chosen, or whose
+// chosen topics are gone after regrouping, isn't narrowed down.
+export function inTopics(items: QueueItem[], topics: Topics[], chosen: string[]): QueueItem[] {
+  const allowed = new Map<ItemType, Set<string>>();
+  for (const { itemType, groups } of topics) {
+    for (const group of groups) {
+      if (!chosen.includes(topicKey(itemType, group.label))) continue;
+      const ids = allowed.get(itemType) ?? new Set<string>();
+      group.ids.forEach((id) => ids.add(id));
+      allowed.set(itemType, ids);
+    }
+  }
+  return items.filter((item) => allowed.get(item.type)?.has(item.id) ?? true);
 }
 
 // Started items first, then the shortlist, then everything else

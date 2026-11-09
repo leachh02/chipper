@@ -8,7 +8,6 @@ import type {
 import DurationRange from "./DurationRange";
 import { formatRuntime, inDurationRange } from "../utils/format";
 import VideoList from "./VideoList";
-import ClusteredVideoList from "./ClusterVideoList";
 import VideoPlayer from "./VideoPlayer";
 import WatchLaterActions from "./WatchLaterActions";
 import { durationToSeconds } from "../utils/youtube";
@@ -19,6 +18,9 @@ import {
   setVideoStatus,
 } from "../db/queries";
 import { useRemoteChanges } from "../db/useRemoteChanges";
+import TopicControls from "../topics/TopicControls";
+import TopicSections from "../topics/TopicSections";
+import { useTopics } from "../topics/useTopics";
 
 const MAX_VIDEO_MINUTES = 180;
 
@@ -29,27 +31,11 @@ const STATUS_FILTERS: { label: string; statuses: ChipStatus[] }[] = [
   { label: "Skipped", statuses: ["skipped"] },
 ];
 
-async function categorizeVideos(videoData: Video[]) {
-  const response = await fetch("/api/categorise", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ videos: videoData }),
-  });
-
-  if (!response.ok) {
-    throw new Error("AI categorizer request failed");
-  }
-
-  const categories = await response.json();
-  return categories;
-}
-
 export default function YTWatchList() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [preferences, setPreferences] = useState<Preferences | null>(null);
   const [search, setSearch] = useState("");
-  const [showAICategories, setShowAICategories] = useState(false);
-  const [clusters, setClusters] = useState<{ [label: string]: string[] }>({});
+  const topics = useTopics("video");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
@@ -68,7 +54,7 @@ export default function YTWatchList() {
 
   if (!preferences) return null;
 
-  const { sortBy, sortOrder, durationRange, statusFilter } =
+  const { sortBy, sortOrder, durationRange, statusFilter, groupByTopic } =
     preferences.youtube;
   const selectedVideo = videos.find((v) => v.id === selectedId);
 
@@ -208,6 +194,12 @@ export default function YTWatchList() {
           })}
         </div>
 
+        <TopicControls
+          state={topics}
+          grouped={!!groupByTopic}
+          onGroupedChange={(grouped) => updatePreferences({ groupByTopic: grouped })}
+        />
+
         {sortBy == "duration" && (
           <DurationRange
             label="Duration"
@@ -217,22 +209,6 @@ export default function YTWatchList() {
           />
         )}
       </div>
-
-      <button
-        hidden={true} //TODO: Commented out for the time being - will add back in once AI categorization is properly setup
-        onClick={async () => {
-          if (showAICategories) {
-            setShowAICategories(false);
-            return;
-          } else {
-            const categories = await categorizeVideos(videos);
-            setShowAICategories(true);
-            setClusters(categories);
-          }
-        }}
-      >
-        AI categories
-      </button>
 
       {selectedVideo && (
         <VideoPlayer
@@ -244,13 +220,20 @@ export default function YTWatchList() {
           onStatusChange={updateStatus}
         />
       )}
-      {showAICategories ? (
-        <ClusteredVideoList
-          videos={sorted}
-          clusters={clusters}
-          onSelect={(v) => setSelectedId(v.id)}
-          onStatusChange={updateStatus}
-        />
+      {groupByTopic && topics.topics ? (
+        <TopicSections
+          items={sorted}
+          topics={topics.topics}
+          runtimeMs={(v) => durationToSeconds(v.duration) * 1000}
+        >
+          {(videos) => (
+            <VideoList
+              videos={videos}
+              onSelect={(v) => setSelectedId(v.id)}
+              onStatusChange={updateStatus}
+            />
+          )}
+        </TopicSections>
       ) : (
         <VideoList
           videos={sorted}

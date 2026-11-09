@@ -98,6 +98,20 @@ To update, pull the latest code and run `docker compose up -d --build` again.
 
 Put `VITE_SPOTIFY_CLIENT_ID` in `apps/frontend/.env` as in [Add Spotify](#3-add-spotify-optional), then run `docker compose up -d --build`. The image is built with that file, so rebuild after changing it. In your Spotify app, add the redirect URI `http://127.0.0.1:8080/dashboard/spotify` (for use on the server's own machine) or `https://<your address>/dashboard/spotify`.
 
+### Group by topic (optional)
+
+Chipper can sort what's left of your Watch Later and podcasts into groups by topic, like "Cooking · Recipe · Pasta" or "Astronomy · Moons · Telescope". Then **Group by topic** shows your list under each group, and a chip session can stick to the topics you pick.
+
+It runs in a second container with a small language model ([all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)). Everything happens on your own machine: nothing is sent anywhere, and there's no API key. Start it with the `ai` profile:
+
+```bash
+docker compose --profile ai up -d --build
+```
+
+The first build downloads the model into the image, about 650 MB in all. The service loads the model when someone groups their backlog, and lets it go after 10 minutes unused (set `CHIPPER_AI_IDLE_MINUTES` to change that).
+
+Then use **Group** on Watch Later or on Spotify's podcasts. Groups sync to all your devices. Use **Regroup** when your backlog has changed a lot; anything added since shows under "Not grouped yet".
+
 ### Back up the server
 
 Everyone's data is in the `chipper-data` volume. To copy it out:
@@ -124,7 +138,7 @@ cd ../server
 CHIPPER_DATA_DIR=/where/to/keep/data java -jar target/chipper-server-*.jar
 ```
 
-`PORT` changes the port from 8080.
+`PORT` changes the port from 8080. For grouping by topic, run the service in `apps/ai` (see its README) and set `CHIPPER_AI_URL` to its address.
 
 ## Why Spotify needs your own copy
 

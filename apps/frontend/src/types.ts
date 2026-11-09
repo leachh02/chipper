@@ -39,6 +39,8 @@ export type YouTubePreferences = {
   sortOrder: "asc" | "desc";
   durationRange: [number, number];
   statusFilter: ChipStatus[];
+  // Shown under each topic, on a server that groups by topic
+  groupByTopic?: boolean;
 };
 
 // Marks albums with no genres from Discogs
@@ -61,12 +63,16 @@ export type PodcastPreferences = {
   statusFilter: ChipStatus[];
   // Minutes left to listen, so part-listened episodes count what remains
   durationRange: [number, number];
+  groupByTopic?: boolean;
 };
 
 export type QueuePreferences = {
   // How long the last session was, in minutes
   minutes: number;
   sources: ItemType[];
+  // Topics to stick to, as "video:<label>" or "episode:<label>". A kind
+  // with none chosen isn't narrowed down.
+  topics?: string[];
 };
 
 export type Preferences = {
@@ -150,6 +156,23 @@ export type Episode = {
   changedAt?: number;
   // When Spotify last listed it
   lastSyncedAt?: number;
+};
+
+// The kinds of item a Chipper server can group by topic
+export type TopicKind = "video" | "episode";
+
+export type Topic = { label: string; ids: string[] };
+
+// A backlog grouped by topic, worked out by a Chipper server's clustering
+// service and synced to every device. One per kind; only the server writes it.
+export type Topics = {
+  id: TopicKind;
+  itemType: TopicKind;
+  // Largest first
+  groups: Topic[];
+  // How many groups were asked for, or null when the service chose
+  requested: number | null;
+  createdAt: number;
 };
 
 // One per record the sync server has, keyed "video:<id>" and so on, plus

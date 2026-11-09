@@ -12,6 +12,8 @@ import type {
   ChipEvent,
   ItemType,
   Preferences,
+  TopicKind,
+  Topics,
 } from "../types";
 
 export async function getAllVideos(): Promise<Video[]> {
@@ -193,6 +195,18 @@ export async function setAlbumGenres(
 export async function getAllEvents(): Promise<ChipEvent[]> {
   const db = await getDB();
   return db.getAll("events");
+}
+
+export async function getTopics(kind: TopicKind): Promise<Topics | undefined> {
+  const db = await getDB();
+  return db.get("topics", kind);
+}
+
+// Straight after regrouping, before the copy synced from the server arrives
+export async function saveTopics(topics: Topics) {
+  const db = await getDB();
+  await db.put("topics", topics);
+  notifyChange("remote");
 }
 
 export async function getAllEpisodes(): Promise<Episode[]> {

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import io.github.leachh02.chipper.clusters.AiClient;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -21,7 +22,8 @@ import jakarta.validation.constraints.Size;
 @RequestMapping("/api")
 public class AuthController {
 
-	public record Status(boolean needsSetup, String version) {
+	// clusters: whether this server can group a backlog by topic
+	public record Status(boolean needsSetup, String version, boolean clusters) {
 	}
 
 	public record Credentials(
@@ -40,18 +42,20 @@ public class AuthController {
 	private final UserRepository users;
 	private final TokenService tokens;
 	private final PasswordEncoder passwords;
+	private final AiClient ai;
 
-	public AuthController(UserRepository users, TokenService tokens, PasswordEncoder passwords) {
+	public AuthController(UserRepository users, TokenService tokens, PasswordEncoder passwords, AiClient ai) {
 		this.users = users;
 		this.tokens = tokens;
 		this.passwords = passwords;
+		this.ai = ai;
 	}
 
 	// Lets the app know whether to show the first-run "create your account" step
 	@GetMapping("/status")
 	public Status status() {
 		String version = getClass().getPackage().getImplementationVersion();
-		return new Status(users.isEmpty(), version != null ? version : "dev");
+		return new Status(users.isEmpty(), version != null ? version : "dev", ai.enabled());
 	}
 
 	// Creates the first account, which is the admin. Only works on a server

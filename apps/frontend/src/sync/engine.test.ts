@@ -210,4 +210,29 @@ describe("sync", () => {
     await phone.sync.syncOnce(server.api());
     expect(heard).toHaveBeenCalledOnce();
   });
+
+  it("takes the server's topic groups and never pushes them back", async () => {
+    const server = new FakeServer();
+    const phone = await device();
+    const topics = {
+      id: "video",
+      itemType: "video",
+      groups: [{ label: "Cooking", ids: ["a"] }],
+      requested: null,
+      createdAt: clock,
+    };
+    server.revision = 1;
+    server.records.set("cluster:video", { kind: "cluster", id: "video", data: topics, revision: 1 });
+
+    expect(await phone.sync.syncOnce(server.api())).toEqual({ received: 1, sent: 0 });
+    expect(await phone.q.getTopics("video")).toEqual(topics);
+
+    // Regrouping replaces them outright
+    server.revision = 2;
+    const regrouped = { ...topics, groups: [{ label: "Baking", ids: ["a"] }], createdAt: clock + 1 };
+    server.records.set("cluster:video", { kind: "cluster", id: "video", data: regrouped, revision: 2 });
+    await phone.sync.syncOnce(server.api());
+    expect((await phone.q.getTopics("video"))?.groups[0].label).toBe("Baking");
+    expect(server.pushes).toBe(0);
+  });
 });

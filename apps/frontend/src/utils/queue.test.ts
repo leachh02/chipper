@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildQueue, type QueueItem } from "./queue";
+import type { Topics } from "../types";
+import { buildQueue, inTopics, type QueueItem } from "./queue";
 
 const item = (key: string, minutes: number, extra: Partial<QueueItem> = {}): QueueItem => ({
   key,
@@ -40,5 +41,44 @@ describe("buildQueue", () => {
 
   it("returns nothing when nothing fits", () => {
     expect(buildQueue([item("a", 50)], 30)).toEqual([]);
+  });
+});
+
+describe("inTopics", () => {
+  const topics: Topics[] = [
+    {
+      id: "video",
+      itemType: "video",
+      groups: [
+        { label: "Cooking", ids: ["pasta", "curry"] },
+        { label: "Space", ids: ["moon"] },
+      ],
+      requested: null,
+      createdAt: 0,
+    },
+  ];
+  const items = [
+    item("pasta", 10),
+    item("curry", 10),
+    item("moon", 10),
+    item("new", 10),
+    item("pod", 10, { type: "episode" }),
+    item("album", 10, { type: "album" }),
+  ];
+
+  it("keeps only the chosen topics of a kind, and leaves other kinds alone", () => {
+    expect(keys(inTopics(items, topics, ["video:Cooking"]))).toEqual(["pasta", "curry", "pod", "album"]);
+    expect(keys(inTopics(items, topics, ["video:Cooking", "video:Space"]))).toEqual([
+      "pasta",
+      "curry",
+      "moon",
+      "pod",
+      "album",
+    ]);
+  });
+
+  it("narrows nothing when no topic is chosen, or the chosen ones are gone", () => {
+    expect(inTopics(items, topics, [])).toEqual(items);
+    expect(inTopics(items, topics, ["video:Woodworking"])).toEqual(items);
   });
 });

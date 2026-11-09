@@ -1,12 +1,15 @@
 // Talks to a self-hosted Chipper server (apps/server), which serves this
 // app and its API from the same address.
+import type { TopicKind, Topics } from "../types";
+
 const API = `${import.meta.env.BASE_URL}api`;
 const SESSION_KEY = "chipper.server";
 
 export type ServerUser = { id: number; username: string; admin: boolean };
 export type Session = { token: string; user: ServerUser };
 
-export type SyncKind = "video" | "album" | "episode" | "event";
+// Clusters are written by the server only
+export type SyncKind = "video" | "album" | "episode" | "event" | "cluster";
 export type SyncRecord = { kind: SyncKind; id: string; data: unknown; revision?: number };
 export type Pulled = { revision: number; records: SyncRecord[] };
 // A refused push means another device changed the same records first
@@ -74,7 +77,7 @@ async function request<T>(
 const device = () => navigator.userAgent.slice(0, 100);
 
 export const server = {
-  status: () => request<{ needsSetup: boolean; version: string }>("/status"),
+  status: () => request<{ needsSetup: boolean; version: string; clusters: boolean }>("/status"),
 
   setup: (username: string, password: string) =>
     request<Session>("/auth/setup", { method: "POST", body: { username, password, device: device() } }),
@@ -101,6 +104,11 @@ export const server = {
 
   deleteUser: (token: string, id: number) =>
     request<void>(`/users/${id}`, { method: "DELETE", token }),
+
+  // Groups the backlog of one kind by topic; groups is null to let the
+  // server choose how many
+  regroup: (token: string, kind: TopicKind, groups: number | null) =>
+    request<Topics>("/clusters", { method: "POST", token, body: { kind, groups } }),
 
   pull: (token: string, since: number) => request<Pulled>(`/sync?since=${since}`, { token }),
 
