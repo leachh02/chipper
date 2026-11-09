@@ -1,5 +1,6 @@
 import { getDB } from "./index";
 import { notifyChange } from "./changes";
+import { randomId } from "../utils/id";
 import { DEFAULT_PREFERENCES } from "./init";
 import type {
   Video,
@@ -276,7 +277,7 @@ function newEvent(
   status: ChipStatus,
 ): ChipEvent {
   return {
-    id: crypto.randomUUID(),
+    id: randomId(),
     itemType,
     itemId,
     status,

@@ -1,3 +1,5 @@
+import { registerBridge } from "./servers.js";
+
 const WATCH_LATER_URL = "https://www.youtube.com/playlist?list=WL";
 const TASKS = ["SYNC_WATCH_LATER", "REMOVE_FROM_WATCH_LATER"];
 
@@ -26,6 +28,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg?.type === "PROGRESS") return;
   return handleAppRequest(msg, sender, sendResponse);
 });
+
+// Keep the app bridge on the servers added on the options page. Registered
+// scripts don't always survive a browser restart, so register again then too.
+chrome.runtime.onInstalled.addListener(() => registerBridge());
+chrome.runtime.onStartup.addListener(() => registerBridge());
+chrome.permissions.onAdded.addListener(() => registerBridge());
+chrome.permissions.onRemoved.addListener(() => registerBridge());
+
+// The toolbar button opens the list of servers
+chrome.action.onClicked.addListener(() => chrome.runtime.openOptionsPage());
 
 async function runOnWatchLater(task, appTabId) {
   const tab = await chrome.tabs.create({ url: WATCH_LATER_URL, active: true });

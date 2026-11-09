@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chipper</title>
+    <style>
+      :root {
+        --bg: #f7f7f5;
+        --surface: #ffffff;
+        --line: #e2e2de;
+        --fg: #1c1b19;
+        --muted: #6b6a66;
+        --accent: #0f766e;
+        --on-accent: #ffffff;
+        --danger: #c62828;
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #121212;
+          --surface: #1b1b1b;
+          --line: #313131;
+          --fg: #ececea;
+          --muted: #a0a09b;
+          --accent: #2dd4bf;
+          --on-accent: #062e2a;
+          --danger: #f87171;
+          color-scheme: dark;
+        }
+      }
+      body {
+        margin: 0;
+        padding: 32px 16px;
+        background: var(--bg);
+        color: var(--fg);
+        font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+      main {
+        max-width: 560px;
+        margin: 0 auto;
+      }
+      h1 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 8px;
+        font-size: 22px;
+      }
+      h2 {
+        margin: 28px 0 8px;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+      }
+      p {
+        margin: 0 0 8px;
+        color: var(--muted);
+      }
+      code {
+        font-size: 13px;
+      }
+      form {
+        display: flex;
+        gap: 8px;
+      }
+      input,
+      button {
+        font: inherit;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        padding: 6px 12px;
+      }
+      input {
+        flex: 1;
+        min-width: 0;
+        background: var(--surface);
+        color: var(--fg);
+      }
+      button {
+        background: var(--surface);
+        color: var(--fg);
+        cursor: pointer;
+      }
+      button[type="submit"] {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--on-accent);
+        font-weight: 600;
+      }
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        margin-bottom: 6px;
+        overflow-wrap: anywhere;
+      }
+      #error {
+        color: var(--danger);
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1><img src="images/axe-icon-32.png" width="28" height="28" alt="" />Chipper</h1>
+      <p>
+        The extension works with Chipper at <code>localhost</code>, <code>127.0.0.1</code> and
+        <code>leachh02.github.io</code>. If you run a Chipper server somewhere else, add its
+        address here, then refresh Chipper.
+      </p>
+
+      <h2>Your servers</h2>
+      <ul id="servers"></ul>
+      <p id="empty">None yet.</p>
+
+      <form id="add">
+        <input
+          id="address"
+          placeholder="192.168.1.20:8080 or https://chipper.example.com"
+          aria-label="Server address"
+          autocomplete="off"
+          spellcheck="false"
+          required
+        />
+        <button type="submit">Add</button>
+      </form>
+      <p id="error" hidden></p>
+    </main>
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

@@ -1,4 +1,5 @@
-import { EXTENSION_IDS } from "../config";
+import { EXTENSION_IDS, EXTENSION_NEEDS_ADDRESS } from "../config";
+import { randomId } from "./id";
 import type { RawVideo } from "../types";
 
 export type SyncMode = "quick" | "full";
@@ -57,7 +58,7 @@ function sendToExtensionId<T>(id: string, message: object): Promise<T | undefine
 // app-bridge content script relays for us through window messages
 function sendThroughBridge<T>(message: object, timeoutMs?: number): Promise<T | undefined> {
   return new Promise((resolve) => {
-    const id = crypto.randomUUID();
+    const id = randomId();
     const timer = timeoutMs ? setTimeout(() => finish(undefined), timeoutMs) : undefined;
 
     function finish(response: T | undefined) {
@@ -94,7 +95,12 @@ async function sendToExtension<T>(message: object): Promise<T | ExtensionError> 
     return { ok: false, error: "The Chipper extension didn't respond" };
   }
 
-  return { ok: false, error: "The Chipper extension isn't installed" };
+  return {
+    ok: false,
+    error: EXTENSION_NEEDS_ADDRESS
+      ? `The Chipper extension isn't installed, or doesn't know this address yet. Click its toolbar button, add ${window.location.host}, then refresh this page.`
+      : "The Chipper extension isn't installed",
+  };
 }
 
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;

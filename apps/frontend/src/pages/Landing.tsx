@@ -8,7 +8,7 @@ import {
   FaRegCircle,
   FaYoutube,
 } from "react-icons/fa";
-import { SPOTIFY } from "../config";
+import { EXTENSION_NEEDS_ADDRESS, SPOTIFY } from "../config";
 import { getAllAlbums, getAllEpisodes, getAllEvents, getAllVideos } from "../db/queries";
 import type { ChipStatus } from "../types";
 import { useRemoteChanges } from "../db/useRemoteChanges";
@@ -111,8 +111,14 @@ export default function Landing() {
           It reads your Watch Later playlist, since YouTube's API doesn't offer it. Open{" "}
           <code className="rounded bg-surface-2 px-1">chrome://extensions</code>, turn on Developer
           mode, choose <strong>Load unpacked</strong> and pick the{" "}
-          <code className="rounded bg-surface-2 px-1">apps/extension</code> folder, then refresh
-          this page.
+          <code className="rounded bg-surface-2 px-1">apps/extension</code> folder
+          {EXTENSION_NEEDS_ADDRESS && (
+            <>
+              . Then click its toolbar button and add{" "}
+              <code className="rounded bg-surface-2 px-1">{window.location.host}</code>
+            </>
+          )}
+          , then refresh this page.
         </>
       ),
     },

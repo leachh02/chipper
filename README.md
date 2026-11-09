@@ -95,7 +95,7 @@ That's enough for YouTube. To add Spotify, or to run Chipper anywhere other than
 
 - [ ] Self-hosted server with live sync between devices (phone and PC), Docker friendly (Jellyfin is good architectural inspiration)
   - [x] Accounts (the first is the admin, who adds the rest), live sync of videos, albums, episodes and history, one Docker container with SQLite; see [SELF_HOSTING.md](SELF_HOSTING.md#the-chipper-server)
-  - [ ] Let the extension work with a server at any address
+  - [x] Let the extension work with a server at any address, added from its options page
   - [ ] AI clusters, available in the self-hosted version only, with a user-chosen number of groups
 - [ ] Split the frontend bundle
 

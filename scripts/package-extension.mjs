@@ -26,7 +26,7 @@ function firefoxManifest() {
   const { key: _key, externally_connectable: _ext, background, ...rest } = manifest;
   return {
     ...rest,
-    background: { scripts: [background.service_worker] },
+    background: { scripts: [background.service_worker], type: background.type },
     browser_specific_settings: {
       gecko: {
         id: "chipper@leachh02.github.io",
@@ -48,7 +48,7 @@ for (const [browser, build] of [
 ]) {
   const dir = join(out, browser);
   mkdirSync(dir, { recursive: true });
-  for (const path of ["background.js", "scripts", "images"]) {
+  for (const path of ["background.js", "servers.js", "options.html", "options.js", "scripts", "images"]) {
     cpSync(join(source, path), join(dir, path), {
       recursive: true,
       filter: (file) => !file.endsWith(".DS_Store"),

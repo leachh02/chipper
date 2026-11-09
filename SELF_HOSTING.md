@@ -67,7 +67,7 @@ Use `127.0.0.1` rather than `localhost`. Spotify only accepts `127.0.0.1` for lo
 The `dist` folder that `npm run build` creates is plain static files, so any static host works, such as nginx, Caddy, GitHub Pages or Cloudflare Pages. A few things to know:
 
 - **Send every page to `index.html`.** Chipper handles its own routes, so a request for `/dashboard/youtube` has to return `index.html`. With nginx that's `try_files $uri /index.html;`, and Caddy's equivalent is `try_files {path} /index.html`.
-- **Let the extension talk to your address.** The extension only talks to the sites listed in its manifest: `localhost`, `127.0.0.1` and the public site. In `apps/extension/manifest.json`, add your address (for example `"https://chipper.example.com/*"`) to `externally_connectable.matches` and to the `matches` of the `app-bridge.js` content script, then reload the extension.
+- **Tell the extension your address.** The extension works with `localhost`, `127.0.0.1` and the public site out of the box. For any other address, click the extension's toolbar button (or open its **Options**), add the address and allow access when the browser asks, then refresh Chipper.
 - **Spotify needs HTTPS.** Apart from `127.0.0.1`, Spotify only accepts `https://` redirect URIs. Add `https://your-address/dashboard/spotify` to your Spotify app.
 
 ## The Chipper server
@@ -91,7 +91,7 @@ To update, pull the latest code and run `docker compose up -d --build` again.
 ### Phones, HTTPS and the extension
 
 - **Over plain `http://`**, Chipper works in any browser on your network, but phones won't install it as an app, because browsers only allow that over HTTPS. To get HTTPS, put the server behind a reverse proxy such as [Caddy](https://caddyserver.com), or use [Tailscale](https://tailscale.com)'s `tailscale serve`.
-- **The Watch Later extension** only talks to `localhost`, `127.0.0.1` and the public site. If the server runs on the PC you sync Watch Later from, open Chipper at `http://127.0.0.1:8080` there. Otherwise, add the server's address to the extension's manifest as described in [Running it somewhere other than your own computer](#running-it-somewhere-other-than-your-own-computer).
+- **The Watch Later extension** works with `http://127.0.0.1:8080` with no setup, on the PC that runs the server. To sync Watch Later against the server from another PC, or at another address, click the extension's toolbar button, add that address (for example `192.168.1.20:8080`) and allow access, then refresh Chipper.
 - **Don't put it on the open internet without HTTPS.** Passwords travel with every sign-in, and there's no limit yet on how often someone can try one.
 
 ### Spotify

@@ -58,7 +58,10 @@ Use the same text for both stores.
 
 **Permission justifications:**
 
-The extension asks for no API permissions. Opening, focusing and closing tabs doesn't need `tabs`, which only unlocks reading tab URLs and titles; an earlier submission was rejected for requesting it unused.
+Opening, focusing and closing tabs doesn't need `tabs`, which only unlocks reading tab URLs and titles; an earlier submission was rejected for requesting it unused.
+
+- `scripting`: People can run their own Chipper server at an address of their choosing. When they add that address on the options page, the extension registers its content script there with `scripting.registerContentScripts`, so the Chipper app on their server can ask it to sync Watch Later. Nothing is injected anywhere else.
+- Optional host permissions `http://*/*` and `https://*/*`: Never granted at install. The options page requests one address at a time, only the self-hosted Chipper server the user types in, and they can remove it there. It's needed so the content script above can run on that server's pages.
 
 - Host permission `https://www.youtube.com/*`: Lets the content script run on the Watch Later playlist page, where it reads the videos and removes the ones the user has finished.
 - Content scripts on `localhost`, `127.0.0.1` and `leachh02.github.io/chipper`: Pass messages between the Chipper web app and the extension. They only run on Chipper's own pages.

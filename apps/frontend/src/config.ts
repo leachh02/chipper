@@ -12,6 +12,13 @@ export const EXTENSION_IDS: string[] = (env.VITE_EXTENSIONS_ID || UNPACKED_EXTEN
   .map((id: string) => id.trim())
   .filter(Boolean);
 
+// Where the extension works with no setup (its manifest lists these). On
+// any other address, such as a server on your network, it has to be added
+// in the extension's options first.
+const EXTENSION_HOSTS = ["localhost", "127.0.0.1", "leachh02.github.io"];
+export const EXTENSION_NEEDS_ADDRESS =
+  typeof window !== "undefined" && !EXTENSION_HOSTS.includes(window.location.hostname);
+
 const spotifyClientId: string = env.VITE_SPOTIFY_CLIENT_ID ?? "";
 
 export const SPOTIFY = {
