@@ -272,6 +272,12 @@ export default function SpotifyDashboard() {
         ))}
       </div>
 
+      {!isAuthenticated && !SPOTIFY.canSignIn && (
+        <p role="alert" className="text-sm text-danger my-2">
+          Spotify sign-in needs HTTPS. Open Chipper at an https:// address, or at 127.0.0.1 on
+          the machine running it. SELF_HOSTING.md explains how.
+        </p>
+      )}
       {errors.map((error) => (
         <p key={error} role="alert" className="text-sm text-danger my-2">
           {/[.!?]$/.test(error) ? error : `${error}.`}

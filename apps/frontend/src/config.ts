@@ -36,6 +36,9 @@ export const SPOTIFY = {
   // of Chipper leaves this out and Spotify is hidden
   enabled: !!spotifyClientId,
   clientId: spotifyClientId,
+  // Signing in hashes a code with crypto.subtle, which browsers only offer
+  // over HTTPS and on 127.0.0.1, not on a plain http:// network address
+  canSignIn: typeof window === "undefined" || window.isSecureContext,
   // Add this to the redirect URIs of your app on the Spotify dashboard
   // (Tests run outside a browser, where there's no window)
   redirectUrl:
