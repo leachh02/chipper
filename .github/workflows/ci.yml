@@ -37,6 +37,12 @@ jobs:
           java-version: 21
           cache: maven
           cache-dependency-path: apps/backend/pom.xml
+      # Keeps the Maven that ./mvnw downloads, so a run doesn't depend on
+      # fetching it from Maven Central every time
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: maven-wrapper-${{ hashFiles('apps/backend/.mvn/wrapper/maven-wrapper.properties') }}
       - run: ./mvnw -B verify
 
   ai:
