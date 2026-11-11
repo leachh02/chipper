@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import ReactPlayer from "react-player";
 import type { ChipStatus, Video } from "../types";
 
@@ -19,6 +19,12 @@ export default function VideoPlayer({
   onClose,
   onStatusChange,
 }: Props) {
+  // Which video you paused. react-player plays whenever it's told to play
+  // and the video is paused, on every render, so this has to follow what
+  // you do in the player, or a paused video would start again by itself.
+  const [pausedId, setPausedId] = useState<string | null>(null);
+  const paused = pausedId === video.id;
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -77,7 +83,9 @@ export default function VideoPlayer({
             width="100%"
             height="100%"
             controls
-            playing
+            playing={!paused}
+            onPlay={() => setPausedId(null)}
+            onPause={() => setPausedId(video.id)}
             onStart={() => {
               if (video.status === "queued") {
                 onStatusChange(video.id, "in_progress");
