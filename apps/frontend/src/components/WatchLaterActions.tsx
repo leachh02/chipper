@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { SERVER } from "../config";
 import type { RawVideo, Video } from "../types";
 import {
   importRawVideos,
@@ -6,7 +7,9 @@ import {
   updateMeta,
 } from "../db/queries";
 import {
+  DEVICE_RUNS_EXTENSIONS,
   fetchVideoDetails,
+  pingExtension,
   parseVideoIdsFromCsv,
   removeFromWatchLater,
   syncWatchLater,
@@ -30,6 +33,12 @@ function countVideos(count: number, adjective?: string) {
 export default function WatchLaterActions({ videos, onChange }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  // On a phone, the buttons that need the extension show only if it answers
+  const [extension, setExtension] = useState(false);
+  useEffect(() => {
+    if (!DEVICE_RUNS_EXTENSIONS) pingExtension().then(setExtension);
+  }, []);
+  const canUseExtension = DEVICE_RUNS_EXTENSIONS || extension;
 
   const inWatchLater = videos.filter((v) => !v.removedAt);
   const chipList = inWatchLater.filter(
@@ -120,29 +129,40 @@ export default function WatchLaterActions({ videos, onChange }: Props) {
           {busy ?? message}
         </span>
       )}
-      <button
-        className="btn btn-primary"
-        disabled={!!busy}
-        onClick={() => sync("quick")}
-        title="Stops once it reaches videos Chipper already has. Assumes new videos are at the top of Watch Later."
-      >
-        Quick sync
-      </button>
-      <button
-        className="btn"
-        disabled={!!busy}
-        onClick={() => sync("full")}
-        title="Reads the whole Watch Later playlist and notices videos you've removed on YouTube."
-      >
-        Full sync
-      </button>
-      <button
-        className="btn"
-        disabled={!!busy || chipList.length === 0}
-        onClick={clearChipList}
-      >
-        Remove {countVideos(chipList.length, "chipped")} from YouTube
-      </button>
+      {!canUseExtension && (
+        <span className="basis-full text-right text-sm text-muted">
+          {SERVER.enabled
+            ? "Watch Later syncs on a computer with the Chipper extension, and reaches this device through your Chipper server."
+            : "Watch Later syncs on a computer with the Chipper extension. Bring it here with a backup file from Your data."}
+        </span>
+      )}
+      {canUseExtension && (
+        <>
+          <button
+            className="btn btn-primary"
+            disabled={!!busy}
+            onClick={() => sync("quick")}
+            title="Stops once it reaches videos Chipper already has. Assumes new videos are at the top of Watch Later."
+          >
+            Quick sync
+          </button>
+          <button
+            className="btn"
+            disabled={!!busy}
+            onClick={() => sync("full")}
+            title="Reads the whole Watch Later playlist and notices videos you've removed on YouTube."
+          >
+            Full sync
+          </button>
+          <button
+            className="btn"
+            disabled={!!busy || chipList.length === 0}
+            onClick={clearChipList}
+          >
+            Remove {countVideos(chipList.length, "chipped")} from YouTube
+          </button>
+        </>
+      )}
       <label className="btn focus-within:outline-2 focus-within:outline-accent">
         Import CSV
         <input

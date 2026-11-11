@@ -14,7 +14,7 @@ import type { ChipStatus } from "../types";
 import { useRemoteChanges } from "../db/useRemoteChanges";
 import { getFlag, setFlag } from "../utils/flags";
 import { formatRuntime } from "../utils/format";
-import { durationToSeconds, pingExtension } from "../utils/youtube";
+import { DEVICE_RUNS_EXTENSIONS, durationToSeconds, pingExtension } from "../utils/youtube";
 
 const WAITING: ChipStatus[] = ["queued", "in_progress"];
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -108,6 +108,7 @@ export default function Landing() {
       title: "Install the extension",
       body: (
         <>
+          {!DEVICE_RUNS_EXTENSIONS && "Install it on a computer, since phones can't run extensions. "}
           It reads your Watch Later playlist, since YouTube's API doesn't offer it. Open{" "}
           <code className="rounded bg-surface-2 px-1">chrome://extensions</code>, turn on Developer
           mode, choose <strong>Load unpacked</strong> and pick the{" "}
@@ -127,11 +128,11 @@ export default function Landing() {
       title: "Sync Watch Later",
       body: (
         <>
-          On{" "}
+          {DEVICE_RUNS_EXTENSIONS ? "On" : "On a computer, go to"}{" "}
           <Link to="/dashboard/youtube" className="link">
             Watch Later
           </Link>
-          , use <strong>Full sync</strong>. A tab opens on YouTube for a moment while Chipper reads
+          {DEVICE_RUNS_EXTENSIONS ? ", use" : " and use"} <strong>Full sync</strong>. A tab opens on YouTube for a moment while Chipper reads
           the playlist.
         </>
       ),
@@ -185,6 +186,18 @@ export default function Landing() {
           <FaHourglassHalf />
           Start a chip session
         </Link>
+        {!setUp && guideHidden && (
+          <button
+            type="button"
+            className="mt-3 block text-sm text-muted hover:text-fg"
+            onClick={() => {
+              setFlag("guideHidden", false);
+              setGuideHidden(false);
+            }}
+          >
+            Show the setup steps
+          </button>
+        )}
       </section>
 
       {showGuide && (

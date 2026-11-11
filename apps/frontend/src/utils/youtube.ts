@@ -35,6 +35,11 @@ export function syncWatchLater(mode: SyncMode, knownIds: string[]) {
   });
 }
 
+// Phones and tablets can't run the extension (Chrome and Safari there have
+// no extensions), so Watch Later is synced from a computer instead
+export const DEVICE_RUNS_EXTENSIONS =
+  typeof window === "undefined" || !window.matchMedia?.("(pointer: coarse)").matches;
+
 // Whether the extension is installed and can talk to this page
 export async function pingExtension(): Promise<boolean> {
   const response = await sendToExtension<{ ok: boolean }>({ type: "PING" });

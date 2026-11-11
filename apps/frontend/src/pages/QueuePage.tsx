@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { FaCheck, FaForward, FaPodcast, FaRecordVinyl, FaYoutube } from "react-icons/fa";
 import ChipActions from "../components/ChipActions";
+import VideoPlayer from "../components/VideoPlayer";
 import { SPOTIFY } from "../config";
 import {
   getAllAlbums,
@@ -13,7 +14,7 @@ import {
   setEpisodeStatus,
   setVideoStatus,
 } from "../db/queries";
-import type { ChipStatus, ItemType, Preferences, QueuePreferences, Topics } from "../types";
+import type { ChipStatus, ItemType, Preferences, QueuePreferences, Topics, Video } from "../types";
 import { formatRuntime } from "../utils/format";
 import { setFlag } from "../utils/flags";
 import {
@@ -66,6 +67,9 @@ export default function QueuePage() {
   const [marked, setMarked] = useState<Record<string, ChipStatus>>({});
   // Groups by topic from a Chipper server, when there are any
   const [topics, setTopics] = useState<Topics[]>([]);
+  // The videos themselves, for playing one here, and the key of the one playing
+  const [videos, setVideos] = useState<Map<string, Video>>(new Map());
+  const [playingKey, setPlayingKey] = useState<string | null>(null);
 
   async function load() {
     const [videos, albums, episodes, prefs, videoTopics, episodeTopics] = await Promise.all([
@@ -77,6 +81,7 @@ export default function QueuePage() {
       getTopics("episode"),
     ]);
     setPool([...videoItems(videos), ...albumItems(albums), ...episodeItems(episodes)]);
+    setVideos(new Map(videos.map((v) => [v.id, v])));
     setTopics([videoTopics, episodeTopics].filter((t): t is Topics => !!t));
     setMarked({});
     setPreferences(prefs);
@@ -131,6 +136,24 @@ export default function QueuePage() {
   }
 
   const statusOf = (item: QueueItem) => marked[item.key] ?? item.status;
+
+  // Plays like Watch Later does: finishing a video marks it done and starts
+  // the next video in the session that's still to watch
+  const playing = queue.find((item) => item.key === playingKey);
+  const playingVideo = playing && videos.get(playing.id);
+  const nextToPlay =
+    playing &&
+    queue
+      .slice(queue.indexOf(playing) + 1)
+      .find((item) => item.type === "video" && !["completed", "skipped"].includes(statusOf(item)));
+  const nextVideo = nextToPlay && videos.get(nextToPlay.id);
+
+  async function finishPlaying() {
+    if (!playing) return;
+    const next = nextToPlay;
+    await changeStatus(playing, "completed");
+    setPlayingKey(next?.key ?? null);
+  }
   const plannedMinutes = queue.reduce((sum, item) => sum + item.minutes, 0);
   const clearedMinutes = queue
     .filter((item) => statusOf(item) === "completed")
@@ -280,6 +303,17 @@ export default function QueuePage() {
         </p>
       )}
 
+      {playing && playingVideo && (
+        <VideoPlayer
+          video={{ ...playingVideo, status: statusOf(playing) }}
+          nextVideo={nextVideo}
+          onNext={() => setPlayingKey(nextToPlay?.key ?? null)}
+          onEnded={finishPlaying}
+          onClose={() => setPlayingKey(null)}
+          onStatusChange={(_, status) => changeStatus(playing, status)}
+        />
+      )}
+
       <ol className="flex flex-col gap-2">
         {queue.map((item) => {
           const status = statusOf(item);
@@ -307,6 +341,13 @@ export default function QueuePage() {
                   href={item.url}
                   target="_blank"
                   rel="noreferrer"
+                  // Videos play here; albums and episodes open in Spotify.
+                  // Ctrl- or Cmd-click still opens a video on YouTube.
+                  onClick={(e) => {
+                    if (item.type !== "video" || e.metaKey || e.ctrlKey || e.shiftKey) return;
+                    e.preventDefault();
+                    setPlayingKey(item.key);
+                  }}
                   className={`font-medium leading-snug line-clamp-2 hover:underline ${
                     status === "completed" ? "line-through" : ""
                   }`}
