@@ -2,6 +2,10 @@
 
 Thanks for helping! Chipper is a small, free, open-source project (GPL-3.0), so issues and pull requests of any size are welcome.
 
+## The easiest way to contribute
+
+Add a greeting to [apps/frontend/greetings.md](apps/frontend/greetings.md). Once you're set up, Chipper's home page picks one at random each time it opens. You can edit the file right on GitHub; the tests check that each greeting is a single line of plain text, at most 60 characters.
+
 ## Setting up
 
 Follow steps 1–3 of [SELF_HOSTING.md](SELF_HOSTING.md), then run the dev server:

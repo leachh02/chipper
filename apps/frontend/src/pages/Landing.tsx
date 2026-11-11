@@ -14,6 +14,7 @@ import type { ChipStatus } from "../types";
 import { useRemoteChanges } from "../db/useRemoteChanges";
 import { getFlag, setFlag } from "../utils/flags";
 import { formatRuntime } from "../utils/format";
+import { randomGreeting } from "../utils/greetings";
 import { DEVICE_RUNS_EXTENSIONS, durationToSeconds, pingExtension } from "../utils/youtube";
 
 const WAITING: ChipStatus[] = ["queued", "in_progress"];
@@ -89,6 +90,8 @@ export default function Landing() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [extension, setExtension] = useState<boolean | null>(null);
   const [guideHidden, setGuideHidden] = useState(() => getFlag("guideHidden"));
+  // A new one each time the page opens
+  const [greeting] = useState(randomGreeting);
 
   const reload = useCallback(() => {
     loadSummary().then(setSummary);
@@ -175,7 +178,7 @@ export default function Landing() {
     <div className="page max-w-4xl">
       <section className="py-4 sm:py-8">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          {setUp ? "Ready for a chip session?" : "Chip away at your backlog"}
+          {setUp ? greeting : "Chip away at your backlog"}
         </h1>
         <p className="mt-2 max-w-xl text-muted">
           {setUp
