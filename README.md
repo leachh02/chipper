@@ -31,74 +31,13 @@ That's enough for YouTube. To add Spotify, or to run Chipper anywhere other than
 
 ## Project layout
 
-| Path | What it is |
-| --- | --- |
-| `apps/frontend` | The app: React, Vite and Tailwind, storing everything in IndexedDB |
-| `apps/extension` | Chrome extension that reads your Watch Later playlist from YouTube |
-| `apps/backend` | The optional self-hosted server: accounts and live sync between devices (Java, Spring Boot and SQLite) |
-| `apps/ai` | Optional service that groups your backlog by topic, for the self-hosted server (Python) |
-| `.github` | CI, plus issue and pull request templates |
-
-## Roadmap
-
-### Phase 0: Housekeeping
-
-- [x] Remove the old Spring backend
-- [x] Add a licence (GPL-3.0)
-- [x] Add `.env.example` and getting-started instructions
-- [x] Scrub the old database password from git history
-
-### Phase 1: The shared "chip" model
-
-- [x] Watched / skipped / deferred status for videos, recorded as video events
-- [x] Line album statuses up with the same model (queued, listening, listened, later, skipped)
-- [x] Persist preferences (sort, filters, thumbnails toggle, duration range) in IndexedDB
-
-### Phase 2: YouTube Watch Later
-
-- [x] Make sync robust: centralise selectors, refuse empty syncs, scroll until the count stops changing
-- [x] Get thumbnails for every video from the video ID
-- [x] Close the player without opening a new YouTube tab; mark videos watched when they end
-- [x] Detect videos removed on YouTube using `lastSeenAt`
-- [x] Delta sync (stop at the first known video), with full sync still available
-- [x] Chip list, plus removing chipped videos from Watch Later through the extension
-- [x] Import a Watch Later playlist from CSV
-
-### Phase 3: Spotify
-
-- [x] Detect added and removed albums; show an error when a fetch fails
-- [x] Proper album card with runtime, track count and a link to Spotify
-- [x] Sort by release date, artist or name; filter by decade
-- [x] Listening (headphones), love (heart) and a shortlist for albums you want to hear soon
-- [x] A genre filter that also shows which albums have no genre
-- [x] Podcasts (saved episodes), filtered by progress and time left
-- [x] Genres and styles from the Discogs masters data dump, since Spotify's artist genres are deprecated and often empty
-- [x] Add, remove or reassign an album's genres yourself; later imports keep your edits
-
-### Phase 4: The depleter
-
-- [x] A queue across services with a time budget ("I have 40 minutes, what should I clear?"): started items first, then the shortlist, then the shortest, skipping anything that won't fit
-
-### Phase 5: Polish and public release
-
-- [x] Design pass: clean up components, light and dark mode, getting-started guide on the landing page
-  - [x] Phone-friendly layout, installable as a web app (PWA) on iOS and Android, with storage that isn't cleared
-- [x] Self-host friendly: a pinned extension ID that works on any local port, Spotify optional, self-hosting and contributor docs, issue templates
-- [x] Export and import all your data as a backup file (merge or replace), which is also how a phone and PC stay in step until Phase 6
-- [ ] Publish the extension (Chrome Web Store and Firefox) and host the site on GitHub Pages; see [docs/publishing.md](docs/publishing.md)
-  - [x] Deploy workflow, store packages, privacy policy and listing text
-  - [ ] Site live, extension approved on both stores
-  - [x] The hosted site is YouTube only: Spotify's Development Mode caps an app at 5 users, so Spotify needs your own client ID in a self-hosted copy
-- [x] CI for typecheck, lint and build; tests for the import and merge logic
-
-### Phase 6: Later, optional
-
-- [ ] Self-hosted server with live sync between devices (phone and PC), Docker friendly (Jellyfin is good architectural inspiration)
-  - [x] Accounts (the first is the admin, who adds the rest), live sync of videos, albums, episodes and history, one Docker container with SQLite; see [SELF_HOSTING.md](SELF_HOSTING.md#the-chipper-server)
-  - [x] Published images on GitHub's container registry, so running it takes only `docker-compose.yml` and `.env`, with a guide for Proxmox; see [SELF_HOSTING.md](SELF_HOSTING.md#start-it)
-  - [x] Let the extension work with a server at any address, added from its options page
-  - [x] AI clusters, available in the self-hosted version only, with a user-chosen number of groups; see [SELF_HOSTING.md](SELF_HOSTING.md#group-by-topic-optional)
-- [x] Split the frontend bundle: each page loads on its own, and React is cached across updates
+| Path             | What it is                                                                                             |
+| ---------------- | ------------------------------------------------------------------------------------------------------ |
+| `apps/frontend`  | The app: React, Vite and Tailwind, storing everything in IndexedDB                                     |
+| `apps/extension` | Chrome extension that reads your Watch Later playlist from YouTube                                     |
+| `apps/backend`   | The optional self-hosted server: accounts and live sync between devices (Java, Spring Boot and SQLite) |
+| `apps/ai`        | Optional service that groups your backlog by topic, for the self-hosted server (Python)                |
+| `.github`        | CI, plus issue and pull request templates                                                              |
 
 ## Licence
 
