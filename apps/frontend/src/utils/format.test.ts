@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatRuntime, inDurationRange, releaseYear } from "./format";
+import { formatAge, formatRuntime, formatViews, inDurationRange, releaseYear } from "./format";
 
 describe("formatRuntime", () => {
   it("shows hours and minutes", () => {
@@ -22,5 +22,22 @@ describe("releaseYear", () => {
     expect(releaseYear("1997-05-21")).toBe(1997);
     expect(releaseYear("1997")).toBe(1997);
     expect(releaseYear("")).toBeNull();
+  });
+});
+
+describe("formatViews", () => {
+  it("shortens like YouTube", () => {
+    expect(formatViews(776_000_000)).toBe("776M views");
+    expect(formatViews(1_234)).toBe("1.2K views");
+    expect(formatViews(1)).toBe("1 view");
+  });
+});
+
+describe("formatAge", () => {
+  it("uses the largest whole unit", () => {
+    const now = Date.parse("2026-11-12T00:00:00Z");
+    expect(formatAge(now - 3 * 365 * 86_400_000, now)).toBe("3 years ago");
+    expect(formatAge(now - 2 * 86_400_000, now)).toBe("2 days ago");
+    expect(formatAge(now, now)).toBe("just now");
   });
 });

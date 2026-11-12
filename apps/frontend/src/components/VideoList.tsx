@@ -2,6 +2,7 @@ import type { ChipStatus, Video } from "../types";
 import fallbackThumbnail from "../assets/fallback-thumbnail.png";
 import ChipActions from "./ChipActions";
 import { thumbnailUrl } from "../utils/youtube";
+import { formatAge, formatViews } from "../utils/format";
 
 interface Props {
   videos: Video[];
@@ -70,6 +71,16 @@ export default function VideoList({
                 {v.title}
               </h3>
               <p className="truncate text-xs text-muted">{v.channel}</p>
+              {(v.views !== undefined || v.uploadedAt !== undefined) && (
+                <p className="truncate text-xs text-muted">
+                  {[
+                    v.views !== undefined && formatViews(v.views),
+                    v.uploadedAt !== undefined && formatAge(v.uploadedAt),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              )}
             </div>
             <div className="mt-auto">
               <ChipActions

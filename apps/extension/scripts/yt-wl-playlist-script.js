@@ -186,10 +186,14 @@ function readItem(el) {
       .map((badge) => badge.textContent.trim())
       .find((text) => /^\d+(:\d{2})+$/.test(text)) ?? "";
 
-  const texts = [...el.querySelectorAll("span")].flatMap((span) => [
-    span.getAttribute("aria-label")?.trim() ?? "",
-    span.textContent.trim(),
-  ]);
+  // Every piece of text the item shows, plus its labels, so the views and
+  // upload age are found whether they're a span each, share one line, or
+  // only appear in full in a label
+  const texts = [
+    ...[...el.querySelectorAll("[aria-label]")].map((node) => node.getAttribute("aria-label")),
+    ...[...el.querySelectorAll("span")].map((span) => span.textContent),
+    ...el.innerText.split(/\n|•/),
+  ].map((text) => text.trim());
 
   return {
     videoId,
