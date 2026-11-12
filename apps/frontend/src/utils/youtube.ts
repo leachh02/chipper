@@ -161,9 +161,9 @@ const VIEW_SCALES: Record<string, number> = {
 };
 
 // "1.2M views" -> 1200000, "776 million views" -> 776000000,
-// "1,234 views" -> 1234, "No views" -> 0
+// "1,234 views" -> 1234, "No views" -> 0, and Watch Later's bare "255K"
 export function parseViews(text?: string): number | undefined {
-  const match = text?.match(/^([\d.,]+)\s?([KMB]|thousand|million|billion)?\s+views?$/i);
+  const match = text?.match(/^([\d.,]+)\s?([KMB]|thousand|million|billion)?(?:\s+views?)?$/i);
   if (!match) return /^no\s+views?$/i.test(text ?? "") ? 0 : undefined;
   const suffix = (match[2] ?? "").toLowerCase();
   const scale = VIEW_SCALES[suffix];
@@ -182,11 +182,20 @@ const UNIT_MS = {
   year: 365 * 86_400_000,
 };
 
-// "3 years ago" -> about three years before now
+// YouTube's short units: "11h", "7d", "2mo", "2 yr"
+function unitOf(word: string): keyof typeof UNIT_MS | undefined {
+  const w = word.toLowerCase();
+  if (w.startsWith("mo")) return "month";
+  if (w.startsWith("mi") || w === "m") return "minute";
+  return (["second", "hour", "day", "week", "year"] as const).find((unit) => unit[0] === w[0]);
+}
+
+// "3 years ago" or "11h ago" -> about that long before now
 export function parseUploaded(text: string | undefined, now: number): number | undefined {
-  const match = text?.match(/(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago$/i);
-  if (!match) return undefined;
-  return now - Number(match[1]) * UNIT_MS[match[2].toLowerCase() as keyof typeof UNIT_MS];
+  const match = text?.match(/(\d+)\s*([a-z]+)\s+ago$/i);
+  const unit = match && unitOf(match[2]);
+  if (!match || !unit) return undefined;
+  return now - Number(match[1]) * UNIT_MS[unit];
 }
 
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;

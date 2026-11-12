@@ -16,12 +16,14 @@ const SELECTORS = {
   menuItem: "ytd-menu-service-item-renderer, yt-list-item-view-model",
   // Only matches an English YouTube interface for now
   removeMenuText: /remove from watch later/i,
-  // The line under each title, like "1.2M views • 3 years ago". Each part
-  // is its own span, and in YouTube's newer layout the span's label has the
-  // full wording ("776 million views") where the text is shortened ("776m").
-  // English only too; anything else is left out.
+  // The line under each title. YouTube words it several ways: "1.2M views •
+  // 3 years ago", a label with "776 million views" behind a shortened
+  // "776m", or on Watch Later just "255K • 11h ago". English only too;
+  // anything else is left out.
   viewsText: /^(?:[\d.,]+\s?(?:[KMB]|thousand|million|billion)?|No)\s+views?$/i,
-  uploadedText: /^(?:Streamed\s+)?\d+\s+(?:second|minute|hour|day|week|month|year)s?\s+ago$/i,
+  uploadedText: /^(?:Streamed\s+)?\d+\s*(?:(?:second|minute|hour|day|week|month|year)s?|secs?|mins?|hrs?|wks?|yrs?|mo|[smhdwy])\s+ago$/i,
+  // The short form's line, as "<views> • <age> ago"
+  statsLine: /^(?:.*•\s*)?([\d.,]+\s?[KMB]?)\s*•\s*(.+\sago)$/i,
 };
 
 // How long to wait for the first video before assuming the list is empty
@@ -194,6 +196,10 @@ function readItem(el) {
     ...[...el.querySelectorAll("span")].map((span) => span.textContent),
     ...el.innerText.split(/\n|•/),
   ].map((text) => text.trim());
+  const stats = el.innerText
+    .split("\n")
+    .map((line) => SELECTORS.statsLine.exec(line.trim()))
+    .find(Boolean);
 
   return {
     videoId,
@@ -202,8 +208,8 @@ function readItem(el) {
     duration,
     url: `https://www.youtube.com/watch?v=${videoId}`,
     // As shown, e.g. "1.2M views" and "3 years ago"; Chipper reads them
-    views: texts.find((text) => SELECTORS.viewsText.test(text)),
-    uploaded: texts.find((text) => SELECTORS.uploadedText.test(text)),
+    views: texts.find((text) => SELECTORS.viewsText.test(text)) ?? stats?.[1],
+    uploaded: texts.find((text) => SELECTORS.uploadedText.test(text)) ?? stats?.[2],
   };
 }
 

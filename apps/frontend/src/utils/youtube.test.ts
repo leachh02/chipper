@@ -53,6 +53,8 @@ describe("parseViews", () => {
     ["2.1B views", 2_100_000_000],
     ["776 million views", 776_000_000],
     ["12 thousand views", 12_000],
+    ["255K", 255_000],
+    ["999", 999],
     ["1 view", 1],
     ["No views", 0],
     ["1,2 Mio. Aufrufe", undefined],
@@ -68,6 +70,15 @@ describe("parseUploaded", () => {
     expect(parseUploaded("2 days ago", now)).toBe(now - 2 * 86_400_000);
     expect(parseUploaded("Streamed 1 year ago", now)).toBe(now - 365 * 86_400_000);
     expect(parseUploaded("vor 2 Tagen", now)).toBeUndefined();
+  });
+
+  it("reads Watch Later's short units", () => {
+    expect(parseUploaded("11h ago", now)).toBe(now - 11 * 3_600_000);
+    expect(parseUploaded("7d ago", now)).toBe(now - 7 * 86_400_000);
+    expect(parseUploaded("2mo ago", now)).toBe(now - 60 * 86_400_000);
+    expect(parseUploaded("30m ago", now)).toBe(now - 30 * 60_000);
+    expect(parseUploaded("2 yr ago", now)).toBe(now - 2 * 365 * 86_400_000);
+    expect(parseUploaded("3w ago", now)).toBe(now - 21 * 86_400_000);
   });
 });
 
