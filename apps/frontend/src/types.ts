@@ -15,8 +15,16 @@ export type Video = {
   duration: string;
   url: string;
 
+  // When Chipper first saw it
   importedAt: number;
   lastSeenAt: number;
+  // Higher is nearer the top of Watch Later, as of the latest sync that read
+  // it. With Watch Later sorted newest first, that's the most recently added.
+  watchLaterOrder?: number;
+  // From the Watch Later page, as of the latest sync that read them. The
+  // upload time is approximate, since YouTube only says "3 years ago".
+  views?: number;
+  uploadedAt?: number;
   // Set when the video is no longer in Watch Later
   removedAt?: number;
   status: ChipStatus;
@@ -35,7 +43,7 @@ export type ChipEvent = {
 };
 
 export type YouTubePreferences = {
-  sortBy: "title" | "channel" | "duration";
+  sortBy: "title" | "channel" | "duration" | "addedToWatchLater" | "addedToChipper" | "views" | "uploaded";
   sortOrder: "asc" | "desc";
   durationRange: [number, number];
   statusFilter: ChipStatus[];
@@ -97,6 +105,9 @@ export type RawVideo = {
   channel: string;
   duration: string;
   url: string;
+  // As the page shows them, e.g. "1.2M views" and "3 years ago"
+  views?: string;
+  uploaded?: string;
 };
 
 export type Album = {

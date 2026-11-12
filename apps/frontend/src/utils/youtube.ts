@@ -1,6 +1,6 @@
 import { EXTENSION_IDS, EXTENSION_NEEDS_ADDRESS } from "../config";
 import { randomId } from "./id";
-import type { RawVideo } from "../types";
+import type { RawVideo, Video, YouTubePreferences } from "../types";
 
 export type SyncMode = "quick" | "full";
 
@@ -106,6 +106,87 @@ async function sendToExtension<T>(message: object): Promise<T | ExtensionError> 
       ? `The Chipper extension isn't installed, or doesn't know this address yet. Click its toolbar button, add ${window.location.host}, then refresh this page.`
       : "The Chipper extension isn't installed",
   };
+}
+
+const byText = (text: (v: Video) => string) => (a: Video, b: Video) =>
+  text(a).trim().localeCompare(text(b).trim(), undefined, { sensitivity: "base" });
+
+const SORTS: Record<
+  YouTubePreferences["sortBy"],
+  ((a: Video, b: Video) => number) | ((v: Video) => number | undefined)[]
+> = {
+  title: byText((v) => v.title),
+  channel: byText((v) => v.channel),
+  duration: (a, b) => durationToSeconds(a.duration) - durationToSeconds(b.duration),
+  // The rest are numbers only some videos have, such as views before a
+  // full sync, so each is a list of numbers to compare in turn
+  addedToWatchLater: [(v) => v.watchLaterOrder],
+  // A first sync brings everything in at once, so ties go by Watch Later
+  addedToChipper: [(v) => v.importedAt, (v) => v.watchLaterOrder],
+  views: [(v) => v.views],
+  uploaded: [(v) => v.uploadedAt],
+};
+
+// Videos in the order chosen on Watch Later. Videos missing the number a
+// sort uses go last either way.
+export function sortVideos(
+  videos: Video[],
+  sortBy: YouTubePreferences["sortBy"],
+  order: YouTubePreferences["sortOrder"],
+): Video[] {
+  const sort = SORTS[sortBy] ?? SORTS.title;
+  const direction = order === "asc" ? 1 : -1;
+  return [...videos].sort((a, b) => {
+    if (typeof sort === "function") return direction * sort(a, b);
+    for (const value of sort) {
+      const [x, y] = [value(a), value(b)];
+      if (x === undefined || y === undefined) {
+        if (x !== y) return x === undefined ? 1 : -1;
+        continue;
+      }
+      if (x !== y) return direction * (x - y);
+    }
+    return 0;
+  });
+}
+
+const VIEW_SCALES: Record<string, number> = {
+  "": 1,
+  k: 1e3,
+  thousand: 1e3,
+  m: 1e6,
+  million: 1e6,
+  b: 1e9,
+  billion: 1e9,
+};
+
+// "1.2M views" -> 1200000, "776 million views" -> 776000000,
+// "1,234 views" -> 1234, "No views" -> 0
+export function parseViews(text?: string): number | undefined {
+  const match = text?.match(/^([\d.,]+)\s?([KMB]|thousand|million|billion)?\s+views?$/i);
+  if (!match) return /^no\s+views?$/i.test(text ?? "") ? 0 : undefined;
+  const suffix = (match[2] ?? "").toLowerCase();
+  const scale = VIEW_SCALES[suffix];
+  // A suffix means a decimal point ("1.2M"); without one, commas group digits
+  const number = suffix ? Number(match[1].replace(",", ".")) : Number(match[1].replace(/[.,]/g, ""));
+  return Number.isFinite(number) ? Math.round(number * scale) : undefined;
+}
+
+const UNIT_MS = {
+  second: 1000,
+  minute: 60_000,
+  hour: 3_600_000,
+  day: 86_400_000,
+  week: 7 * 86_400_000,
+  month: 30 * 86_400_000,
+  year: 365 * 86_400_000,
+};
+
+// "3 years ago" -> about three years before now
+export function parseUploaded(text: string | undefined, now: number): number | undefined {
+  const match = text?.match(/(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago$/i);
+  if (!match) return undefined;
+  return now - Number(match[1]) * UNIT_MS[match[2].toLowerCase() as keyof typeof UNIT_MS];
 }
 
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;

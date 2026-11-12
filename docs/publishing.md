@@ -38,12 +38,12 @@ Use the same text for both stores.
 > Chipper helps you work through your YouTube Watch Later playlist a bit at a time. Tell it how long you've got, and it picks videos that fit.
 >
 > YouTube doesn't let apps read Watch Later, so this extension does it for the Chipper web app (https://leachh02.github.io/chipper/):
-> • Sync: reads the videos in your Watch Later playlist
+> • Sync: reads the videos in your Watch Later playlist, with their view counts and upload dates, so Chipper can sort by them
 > • Tidy up: removes the videos you've marked as watched or skipped
 >
 > Everything stays in your browser. There are no accounts, no tracking and no ads. Chipper is free and open source: https://github.com/leachh02/chipper
 >
-> Removing videos relies on YouTube's menu wording, so keep YouTube in English.
+> Removing videos, and reading view counts and upload dates, rely on YouTube's wording, so keep YouTube in English.
 
 **Category:** Productivity
 

@@ -16,6 +16,12 @@ const SELECTORS = {
   menuItem: "ytd-menu-service-item-renderer, yt-list-item-view-model",
   // Only matches an English YouTube interface for now
   removeMenuText: /remove from watch later/i,
+  // The line under each title, like "1.2M views • 3 years ago". Each part
+  // is its own span, and in YouTube's newer layout the span's label has the
+  // full wording ("776 million views") where the text is shortened ("776m").
+  // English only too; anything else is left out.
+  viewsText: /^(?:[\d.,]+\s?(?:[KMB]|thousand|million|billion)?|No)\s+views?$/i,
+  uploadedText: /^(?:Streamed\s+)?\d+\s+(?:second|minute|hour|day|week|month|year)s?\s+ago$/i,
 };
 
 // How long to wait for the first video before assuming the list is empty
@@ -180,12 +186,20 @@ function readItem(el) {
       .map((badge) => badge.textContent.trim())
       .find((text) => /^\d+(:\d{2})+$/.test(text)) ?? "";
 
+  const texts = [...el.querySelectorAll("span")].flatMap((span) => [
+    span.getAttribute("aria-label")?.trim() ?? "",
+    span.textContent.trim(),
+  ]);
+
   return {
     videoId,
     title: link.textContent.trim() || "Unknown title",
     channel: el.querySelector(SELECTORS.channelLink)?.textContent.trim() ?? "",
     duration,
     url: `https://www.youtube.com/watch?v=${videoId}`,
+    // As shown, e.g. "1.2M views" and "3 years ago"; Chipper reads them
+    views: texts.find((text) => SELECTORS.viewsText.test(text)),
+    uploaded: texts.find((text) => SELECTORS.uploadedText.test(text)),
   };
 }
 

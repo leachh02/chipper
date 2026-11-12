@@ -10,7 +10,7 @@ import { formatRuntime, inDurationRange } from "../utils/format";
 import VideoList from "./VideoList";
 import VideoPlayer from "./VideoPlayer";
 import WatchLaterActions from "./WatchLaterActions";
-import { durationToSeconds } from "../utils/youtube";
+import { durationToSeconds, sortVideos } from "../utils/youtube";
 import {
   getAllVideos,
   getPreferences,
@@ -30,6 +30,15 @@ const STATUS_FILTERS: { label: string; statuses: ChipStatus[] }[] = [
   { label: "Watched", statuses: ["completed"] },
   { label: "Skipped", statuses: ["skipped"] },
 ];
+
+// What a sort depends on, where it isn't obvious
+const SORT_NOTES: Partial<Record<YouTubePreferences["sortBy"], string>> = {
+  addedToWatchLater:
+    "Follows the order of Watch Later on YouTube, so keep it sorted by date added, newest first.",
+  views: "Views are as of each video's latest sync. A full sync fills in any that are missing.",
+  uploaded:
+    "Upload dates are approximate, from YouTube's \"3 years ago\". A full sync fills in any that are missing.",
+};
 
 export default function YTWatchList() {
   const [videos, setVideos] = useState<Video[]>([]);
@@ -95,21 +104,7 @@ export default function YTWatchList() {
     );
   });
 
-  const sorted = [...filtered].sort((a, b) => {
-    let cmp = 0;
-    if (sortBy === "title")
-      cmp = a.title
-        .trim()
-        .localeCompare(b.title.trim(), undefined, { sensitivity: "base" });
-    else if (sortBy === "channel")
-      cmp = a.channel
-        .trim()
-        .localeCompare(b.channel.trim(), undefined, { sensitivity: "base" });
-    else if (sortBy === "duration")
-      cmp = durationToSeconds(a.duration) - durationToSeconds(b.duration);
-
-    return sortOrder === "asc" ? cmp : -cmp;
-  });
+  const sorted = sortVideos(filtered, sortBy, sortOrder);
 
   // The next video in the list as it's currently sorted and filtered
   const nextVideo = selectedId
@@ -159,9 +154,13 @@ export default function YTWatchList() {
               updatePreferences({ sortBy: e.target.value as typeof sortBy })
             }
           >
+            <option value="addedToWatchLater">Added to Watch Later</option>
+            <option value="addedToChipper">Added to Chipper</option>
             <option value="title">Title</option>
             <option value="channel">Channel</option>
             <option value="duration">Duration</option>
+            <option value="views">Views</option>
+            <option value="uploaded">Uploaded</option>
           </select>
           <select
             className="input"
@@ -199,6 +198,8 @@ export default function YTWatchList() {
           grouped={!!groupByTopic}
           onGroupedChange={(grouped) => updatePreferences({ groupByTopic: grouped })}
         />
+
+        {SORT_NOTES[sortBy] && <p className="text-sm text-muted">{SORT_NOTES[sortBy]}</p>}
 
         {sortBy == "duration" && (
           <DurationRange

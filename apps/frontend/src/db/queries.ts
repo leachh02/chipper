@@ -1,6 +1,7 @@
 import { getDB } from "./index";
 import { notifyChange } from "./changes";
 import { randomId } from "../utils/id";
+import { parseUploaded, parseViews } from "../utils/youtube";
 import { DEFAULT_PREFERENCES } from "./init";
 import type {
   Video,
@@ -37,9 +38,11 @@ export type ImportSummary = { added: number; removed: number };
 
 // Adds or updates videos from Watch Later. A complete import has seen the
 // whole playlist, so any video it didn't see is marked as removed.
+// ordered: the videos are in Watch Later's order from the top, as a sync
+// reads them. A quick sync reads only the top, so it's still in order.
 export async function importRawVideos(
   rawVideos: RawVideo[],
-  { complete }: { complete: boolean },
+  { complete, ordered = false }: { complete: boolean; ordered?: boolean },
 ): Promise<ImportSummary> {
   const db = await getDB();
   const tx = db.transaction("videos", "readwrite");
@@ -48,7 +51,7 @@ export async function importRawVideos(
   const seen = new Set<string>();
   const summary: ImportSummary = { added: 0, removed: 0 };
 
-  for (const raw of rawVideos) {
+  for (const [index, raw] of rawVideos.entries()) {
     if (!raw.videoId) continue;
     seen.add(raw.videoId);
 
@@ -65,6 +68,11 @@ export async function importRawVideos(
 
       importedAt: existing?.importedAt ?? now,
       lastSeenAt: now,
+      // Counting down from now keeps this sync's videos above everything
+      // read earlier, which a later sync found further down
+      watchLaterOrder: ordered ? now - index : existing?.watchLaterOrder,
+      views: parseViews(raw.views) ?? existing?.views,
+      uploadedAt: parseUploaded(raw.uploaded, now) ?? existing?.uploadedAt,
       // It's in Watch Later, so it hasn't been removed
       removedAt: undefined,
       status: existing?.status ?? "queued",

@@ -68,6 +68,7 @@ export default function WatchLaterActions({ videos, onChange }: Props) {
 
       const summary = await importRawVideos(result.videos, {
         complete: result.complete,
+        ordered: true,
       });
       await updateMeta(Date.now());
 
@@ -142,7 +143,7 @@ export default function WatchLaterActions({ videos, onChange }: Props) {
             className="btn btn-primary"
             disabled={!!busy}
             onClick={() => sync("quick")}
-            title="Stops once it reaches videos Chipper already has. Assumes new videos are at the top of Watch Later."
+            title="Stops once it reaches videos Chipper already has. Assumes Watch Later is sorted by date added, newest first."
           >
             Quick sync
           </button>

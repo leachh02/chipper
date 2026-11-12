@@ -100,6 +100,33 @@ describe("importRawVideos", () => {
 
     expect((await q.getAllVideos())[0].duration).toBe("4:20");
   });
+  it("keeps Watch Later's order across a full sync and a later quick sync", async () => {
+    const q = await load();
+    await q.importRawVideos([raw("a"), raw("b"), raw("c")], { complete: true, ordered: true });
+    await new Promise((r) => setTimeout(r, 5));
+    // Quick sync: two new videos at the top, then known ones
+    await q.importRawVideos([raw("new1"), raw("new2"), raw("a")], { complete: false, ordered: true });
+
+    const videos = await q.getAllVideos();
+    const order = videos
+      .sort((x, y) => y.watchLaterOrder! - x.watchLaterOrder!)
+      .map((v) => v.id);
+    expect(order).toEqual(["new1", "new2", "a", "b", "c"]);
+  });
+
+  it("reads views and upload age, and keeps them when a sync doesn't", async () => {
+    const q = await load();
+    await q.importRawVideos([{ ...raw("a"), views: "1.2M views", uploaded: "3 years ago" }], {
+      complete: false,
+    });
+    await q.importRawVideos([raw("a")], { complete: false });
+
+    const [video] = await q.getAllVideos();
+    expect(video.views).toBe(1_200_000);
+    expect(Date.now() - video.uploadedAt!).toBeGreaterThan(2.9 * 365 * 86_400_000);
+    // A CSV import isn't in Watch Later's order
+    expect(video.watchLaterOrder).toBeUndefined();
+  });
 });
 
 describe("importAlbums", () => {
