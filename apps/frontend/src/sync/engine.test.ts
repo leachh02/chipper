@@ -1,6 +1,6 @@
 import { IDBFactory } from "fake-indexeddb";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { RawVideo } from "../types";
+import type { Album, RawVideo } from "../types";
 import type { Pulled, PushResult, SyncRecord } from "./api";
 import type { SyncApi } from "./engine";
 
@@ -10,6 +10,25 @@ const raw = (videoId: string): RawVideo => ({
   channel: "Channel",
   duration: "10:00",
   url: `https://www.youtube.com/watch?v=${videoId}`,
+});
+
+const album = (id: string, extra: Partial<Album> = {}): Album => ({
+  id,
+  name: `Album ${id}`,
+  artist: "Artist",
+  artist_id: "artist",
+  image: "",
+  release_date: "2001",
+  total_tracks: 10,
+  runtime_ms: 40 * 60000,
+  genres: [],
+  status: "queued",
+  completed_at: null,
+  rating: null,
+  added_at: "2026-01-01T00:00:00Z",
+  last_synced: "0",
+  url: "",
+  ...extra,
 });
 
 // Behaves like apps/backend: one revision per push, and a push is refused if
@@ -234,5 +253,44 @@ describe("sync", () => {
     await phone.sync.syncOnce(server.api());
     expect((await phone.q.getTopics("video"))?.groups[0].label).toBe("Baking");
     expect(server.pushes).toBe(0);
+  });
+
+  it("brings genres found on one device to another that has the album too", async () => {
+    const server = new FakeServer();
+    const pc = await device();
+    const phone = await device();
+    // Both connected to Spotify and saw the album before any genres
+    await pc.q.importAlbums([album("a")]);
+    await phone.q.importAlbums([album("a")]);
+    await pc.sync.syncOnce(server.api());
+    await phone.sync.syncOnce(server.api());
+
+    tick(1);
+    await pc.q.saveAlbumGenres(new Map([["a", ["Jazz"]]]));
+    await pc.sync.syncOnce(server.api());
+    await phone.sync.syncOnce(server.api());
+
+    expect((await phone.q.getAllAlbums())[0].genres).toEqual(["Jazz"]);
+    // And neither keeps pushing its copy back
+    expect(await pc.sync.syncOnce(server.api())).toEqual({ received: 0, sent: 0 });
+    expect(await phone.sync.syncOnce(server.api())).toEqual({ received: 0, sent: 0 });
+  });
+
+  it("settles when two devices' copies differ but neither is newer", async () => {
+    const server = new FakeServer();
+    const pc = await device();
+    const phone = await device();
+    await pc.q.importAlbums([album("a", { name: "Live" })]);
+    await phone.q.importAlbums([album("a", { name: "Live (Remastered)" })]);
+
+    for (let i = 0; i < 3; i++) {
+      await pc.sync.syncOnce(server.api());
+      await phone.sync.syncOnce(server.api());
+    }
+    const before = server.pushes;
+    await pc.sync.syncOnce(server.api());
+    await phone.sync.syncOnce(server.api());
+    expect(server.pushes).toBe(before);
+    expect((await pc.q.getAllAlbums())[0].name).toBe((await phone.q.getAllAlbums())[0].name);
   });
 });

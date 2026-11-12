@@ -119,11 +119,18 @@ export function mergeItem<T extends Item>(
   incomingEvents: Map<string, number>,
 ): T {
   const key = `${type}:${local.id}`;
+  // Looking up genres counts as a change, since they're one of the album's
+  // own fields
   const changed = (item: T, events: Map<string, number>) =>
-    item.changedAt ?? events.get(key) ?? 0;
+    Math.max(
+      item.changedAt ?? events.get(key) ?? 0,
+      type === "album" ? ((item as Album).genresCheckedAt ?? 0) : 0,
+    );
 
-  const base = syncedAt(type, incoming) > syncedAt(type, local) ? incoming : local;
-  const own = changed(incoming, incomingEvents) > changed(local, localEvents) ? incoming : local;
+  // A tie goes to the incoming copy. If each side kept its own, two devices
+  // with different copies would push them back and forth forever.
+  const base = syncedAt(type, incoming) >= syncedAt(type, local) ? incoming : local;
+  const own = changed(incoming, incomingEvents) >= changed(local, localEvents) ? incoming : local;
 
   const merged = { ...base } as Record<string, unknown>;
   for (const field of OWN_FIELDS[type]) {
