@@ -1,6 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactPlayer from "react-player";
 import type { ChipStatus, Video } from "../types";
+
+// The YouTube player element behind react-player
+type YouTubeElement = HTMLVideoElement & {
+  loadComplete?: Promise<void>;
+  api?: { loadVideoById(id: string): void } | null;
+};
 
 type Props = {
   video: Video;
@@ -24,6 +30,19 @@ export default function VideoPlayer({
   // you do in the player, or a paused video would start again by itself.
   const [pausedId, setPausedId] = useState<string | null>(null);
   const paused = pausedId === video.id;
+
+  // One YouTube player for every video you watch here, with each next video
+  // loaded into it. A new player would replace the one that's fullscreen,
+  // and its fullscreen button would then stop working.
+  const playerRef = useRef<YouTubeElement>(null);
+  const [firstUrl] = useState(video.url);
+  const loadedId = useRef(video.id);
+  useEffect(() => {
+    const player = playerRef.current;
+    if (!player || loadedId.current === video.id) return;
+    loadedId.current = video.id;
+    player.loadComplete?.then(() => player.api?.loadVideoById(video.id));
+  }, [video.id]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -77,9 +96,9 @@ export default function VideoPlayer({
         </div>
         <div className="aspect-video">
           <ReactPlayer
-            // A fresh player per video, so the next one starts from the top
-            key={video.id}
-            src={video.url}
+            ref={playerRef}
+            // Kept as the first video's, since a new address makes a new player
+            src={firstUrl}
             width="100%"
             height="100%"
             controls
