@@ -80,13 +80,15 @@ const currentToken = {
 
 let tokenExchangeInProgress = false;
 
-export async function handleSpotifyCallback() {
-  if (tokenExchangeInProgress) return;
+// Finishes signing in when Spotify sends you back here. True if this
+// visit is that return, so you've just connected.
+export async function handleSpotifyCallback(): Promise<boolean> {
+  if (tokenExchangeInProgress) return false;
 
   const args = new URLSearchParams(window.location.search);
   const code = args.get("code");
 
-  if (!code) return;
+  if (!code) return false;
 
   tokenExchangeInProgress = true;
 
@@ -96,6 +98,7 @@ export async function handleSpotifyCallback() {
   const url = new URL(window.location.href);
   url.searchParams.delete("code");
   window.history.replaceState({}, document.title, url.toString());
+  return true;
 }
 
 export async function ensureValidToken() {

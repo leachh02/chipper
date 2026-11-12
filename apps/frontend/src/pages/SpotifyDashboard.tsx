@@ -12,6 +12,7 @@ import {
   loginWithSpotifyClick,
 } from "../utils/spotify";
 import { DISCOGS_DUMPS_URL, matchDiscogsGenres } from "../utils/discogs";
+import { formatAge } from "../utils/format";
 import {
   getAllAlbums,
   getAllEpisodes,
@@ -129,12 +130,12 @@ export default function SpotifyDashboard() {
     async function init() {
       setPreferences(await getPreferences());
 
-      // Show what's saved straight away, then refresh from Spotify
       await reload();
       setLoading(false);
 
+      let justConnected = false;
       try {
-        await handleSpotifyCallback();
+        justConnected = await handleSpotifyCallback();
         await ensureValidToken();
       } catch (err) {
         setErrors([`Couldn't sign in to Spotify: ${String((err as Error).message ?? err)}`]);
@@ -142,7 +143,9 @@ export default function SpotifyDashboard() {
 
       if (!localStorage.getItem("access_token")) return;
       setIsAuthenticated(true);
-      await sync();
+      // Only right after connecting. Otherwise syncing waits for Sync now,
+      // since every sync is a burst of requests that Spotify rate limits.
+      if (justConnected) await sync();
     }
 
     init();
@@ -206,6 +209,14 @@ export default function SpotifyDashboard() {
   if (loading || !preferences) return <div className="page">Loading...</div>;
 
   const hasData = albums.length > 0 || episodes.length > 0;
+  // Syncing is up to you, so say how fresh the lists are
+  const lastSynced = Math.max(
+    0,
+    ...albums.map((a) => Number(a.last_synced) || 0),
+    ...episodes.map((e) => e.lastSyncedAt ?? 0),
+  );
+  const shownStatus =
+    status || (isAuthenticated && lastSynced ? `Last synced ${formatAge(lastSynced)}` : "");
   const uncheckedAlbums = albums.filter((a) => !a.genresCheckedAt).length;
 
   return (
@@ -213,9 +224,9 @@ export default function SpotifyDashboard() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h1 className="page-title">Spotify</h1>
         <div className="flex flex-wrap items-center justify-end gap-2">
-          {status && (
+          {shownStatus && (
             <span className="basis-full text-right text-sm text-muted" role="status">
-              {status}
+              {shownStatus}
             </span>
           )}
           {isAuthenticated ? (
